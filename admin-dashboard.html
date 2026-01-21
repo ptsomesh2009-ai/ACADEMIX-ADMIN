@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admission Form 2026-27 | JDVM</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #8B0000;
+            --accent: #FF3E3E;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #f8fafc;
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s ease; }
+        body { 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Decorative Background */
+        .glow { position: fixed; width: 300px; height: 300px; background: var(--primary); filter: blur(120px); border-radius: 50%; opacity: 0.2; z-index: -1; }
+        .glow-1 { top: -50px; left: -50px; }
+        .glow-2 { bottom: -50px; right: -50px; }
+
+        .form-container {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 24px; color: var(--accent); }
+        .header p { opacity: 0.6; font-size: 14px; margin-top: 5px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 4px rgba(255, 62, 62, 0.1);
+        }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(139, 0, 0, 0.3);
+        }
+
+        button:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 62, 62, 0.4); }
+        button:active { transform: translateY(0); }
+
+        /* Success Message Overlay */
+        .success-overlay {
+            position: fixed; inset: 0; background: var(--bg); display: none;
+            justify-content: center; align-items: center; z-index: 1000; text-align: center;
+        }
+        .success-overlay.active { display: flex; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 480px) {
+            .row { grid-template-columns: 1fr; }
+            .form-container { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="form-container">
+    <div class="header">
+        <h1>ADMISSION FORM</h1>
+        <p>Jantraji Devi Vidya Mandir | Session 2026-27</p>
+    </div>
+
+    <form id="admissionForm">
+        <div class="form-group">
+            <label>Full Name of Student</label>
+            <input type="text" id="name" placeholder="Enter student name" required>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label>Applying for Class</label>
+                <select id="class" required>
+                    <option value="" disabled selected>Select Class</option>
+                    <option value="Nursery">Nursery</option>
+                    <option value="LKG">LKG</option>
+                    <option value="UKG">UKG</option>
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" id="dob" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Father's Full Name</label>
+            <input type="text" id="father" placeholder="Enter father's name" required>
+        </div>
+
+        <div class="form-group">
+            <label>WhatsApp / Mobile Number</label>
+            <input type="tel" id="mobile" placeholder="+91 XXXXX XXXXX" pattern="[0-9]{10}" required title="Please enter a valid 10-digit number">
+        </div>
+
+        <div class="form-group">
+            <label>Complete Address</label>
+            <textarea id="address" rows="3" placeholder="Village, Post, City..." required></textarea>
+        </div>
+
+        <div id="paymentStatus" style="font-size: 11px; opacity: 0.5; text-align: center; margin-bottom: 10px;">
+            Registration Fee: ₹100.00 (To be paid at counter for now)
+        </div>
+
+        <button type="submit" id="submitBtn">Submit Registration</button>
+    </form>
+</div>
+
+<div class="success-overlay" id="successScreen">
+    <div>
+        <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+        <h1 style="color: var(--accent);">REGISTRATION SUCCESSFUL!</h1>
+        <p style="opacity: 0.7; max-width: 300px; margin: auto;">Your application has been received. Please visit school with your documents for final verification.</p>
+        <button onclick="location.reload()" style="width: auto; padding: 12px 30px; margin-top: 30px; background: var(--glass);">Fill Another Form</button>
+    </div>
+</div>
+
+<script>
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
+        authDomain: "academix-d221e.firebaseapp.com",
+        projectId: "academix-d221e",
+        storageBucket: "academix-d221e.firebasestorage.app",
+        messagingSenderId: "285941718942",
+        appId: "1:285941718942:web:57b3bbd7773c02a511808f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("admissionForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("submitBtn");
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        const formData = {
+            name: document.getElementById("name").value,
+            class: document.getElementById("class").value,
+            dob: document.getElementById("dob").value,
+            father: document.getElementById("father").value,
+            mobile: document.getElementById("mobile").value,
+            address: document.getElementById("address").value,
+            paymentId: "OFFLINE_UNPAID", // Placeholder for future PG integration
+            photo: "https://via.placeholder.com/150", // Placeholder photo
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            /* PAYMENT GATEWAY LOGIC WILL GO HERE:
+               1. Call Razorpay API
+               2. On success, proceed to Firestore save
+            */
+
+            await db.collection("new_requests").add(formData);
+            document.getElementById("successScreen").classList.add("active");
+        } catch (error) {
+            console.error(error);
+            alert("Error submitting form. Please try again.");
+            btn.innerText = "Submit Registration";
+            btn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>

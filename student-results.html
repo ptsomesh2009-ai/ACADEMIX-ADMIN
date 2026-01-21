@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ACADEMIX - Enter Student Results</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#8B0000;
+    color:white;
+}
+
+.header{
+    background:#7a0000;
+    padding:15px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.container{ padding:20px; }
+
+.input-box{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px;
+    margin-bottom:15px;
+}
+
+input{
+    padding:10px;
+    border:none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    color:black;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+button{
+    margin-top:10px;
+    background:#8B0000;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:5px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Enter Student Results</div>
+
+<div class="container">
+
+<div class="input-box">
+    <input id="enroll" placeholder="Enrollment No">
+    <input id="sname" placeholder="Student Name">
+    <input id="pname" placeholder="Parent Name">
+    <input id="exam" placeholder="Exam ID (FA1_2026)">
+</div>
+
+<table id="sheet">
+<tr>
+<th>Subject</th>
+<th>Marks</th>
+</tr>
+</table>
+
+<button onclick="addRow()">Add Subject</button>
+<button onclick="saveResults()">Save Results</button>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
+  authDomain: "academix-d221e.firebaseapp.com",
+  projectId: "academix-d221e",
+  storageBucket: "academix-d221e.firebasestorage.app",
+  messagingSenderId: "285941718942",
+  appId: "1:285941718942:web:57b3bbd7773c02a511808f"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const table = document.getElementById("sheet");
+
+function addRow(){
+    let row = table.insertRow();
+    row.insertCell().innerHTML="<input>";
+    row.insertCell().innerHTML="<input>";
+}
+
+function saveResults(){
+    let enroll = enrollInput();
+    let exam = document.getElementById("exam").value;
+    let data = {};
+
+    for(let i=1;i<table.rows.length;i++){
+        let subject = table.rows[i].cells[0].children[0].value;
+        let marks = Number(table.rows[i].cells[1].children[0].value);
+        if(subject) data[subject]=marks;
+    }
+
+    db.collection("results").doc(enroll)
+      .set({
+        exams:{
+          [exam]:{
+            examName: exam,
+            subjects: data
+          }
+        }
+      },{merge:true});
+
+    alert("Results Saved Successfully");
+}
+
+function enrollInput(){
+    return document.getElementById("enroll").value;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ACADEMIX Student Entry</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#8B0000;
+    color:white;
+}
+
+.header{
+    background:#7a0000;
+    padding:15px;
+    font-size:22px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.container{
+    padding:20px;
+}
+
+.fixed-inputs{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.fixed-inputs input{
+    padding:10px;
+    border:none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    color:black;
+}
+
+th, td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+input{
+    width:100%;
+    border:none;
+    padding:6px;
+    font-size:14px;
+}
+
+.controls{
+    margin:15px 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+button{
+    background:#8B0000;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:5px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">ACADEMIX — Student Database Entry</div>
+
+<div class="container">
+
+<!-- FIXED HEADER INPUTS -->
+<div class="fixed-inputs">
+    <input id="school" placeholder="School Name">
+    <input id="year" placeholder="Academic Year">
+</div>
+
+<div class="controls">
+<button onclick="addRow()">Add Student</button>
+<button onclick="removeRow()">Remove Last</button>
+<button onclick="saveData()">Update Database</button>
+</div>
+
+<table id="sheet">
+<tr>
+<th>Enrollment No</th>
+<th>Student Name</th>
+<th>Parent Name</th>
+<th>Class</th>
+</tr>
+</table>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
+  authDomain: "academix-d221e.firebaseapp.com",
+  projectId: "academix-d221e",
+  storageBucket: "academix-d221e.firebasestorage.app",
+  messagingSenderId: "285941718942",
+  appId: "1:285941718942:web:57b3bbd7773c02a511808f"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const table = document.getElementById("sheet");
+
+function addRow(){
+    let row = table.insertRow();
+    for(let i=0;i<4;i++){
+        row.insertCell().innerHTML = "<input>";
+    }
+}
+
+function removeRow(){
+    if(table.rows.length>1) table.deleteRow(-1);
+}
+
+function saveData(){
+    for(let i=1;i<table.rows.length;i++){
+        let cells = table.rows[i].cells;
+        let enroll = cells[0].children[0].value;
+        if(!enroll) continue;
+
+        let data = {
+            name: cells[1].children[0].value,
+            parent: cells[2].children[0].value,
+            class: cells[3].children[0].value,
+            school: document.getElementById("school").value,
+            year: document.getElementById("year").value
+        };
+
+        db.collection("students").doc(enroll).set(data, { merge:true });
+    }
+    alert("Database Updated Successfully");
+}
+</script>
+
+</body>
+</html>
+
