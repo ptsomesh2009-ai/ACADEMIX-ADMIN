@@ -42,6 +42,10 @@
         
         .tab-btn { padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; flex: 1; color: var(--text); cursor: pointer; }
         .tab-btn.active { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+        
+        /* Extra styling for dynamic rows */
+        .dynamic-row { display: flex; gap: 8px; margin-bottom: 5px; }
+        .admin-list-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-top: 5px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -80,8 +84,9 @@
 
 <div class="fab-container" id="fabMenu">
     <div class="fab-options">
-        <div class="fab-item" onclick="window.location.href='student-entry.html'">👤 Direct Student Entry</div>
-        <div class="fab-item" onclick="window.location.href='student-results.html'">📊 Enter Exam Result</div>
+        <div class="fab-item" onclick="openAdminManager()">🔑 Manage Admins</div>
+        <div class="fab-item" onclick="openStudentModal()">👤 Direct Student Entry</div>
+        <div class="fab-item" onclick="openResultModal()">📊 Enter Exam Result</div>
     </div>
     <div class="fab-main" onclick="toggleFab()">+</div>
 </div>
@@ -114,7 +119,7 @@
     function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); }
     function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
 
-    // --- Student Entry Form (Backup Logic Kept) ---
+    // --- Student Entry Form with Dynamic Details ---
     async function openStudentModal() {
         toggleFab();
         const snap = await db.collection("students").get();
@@ -131,8 +136,17 @@
                 <option value="9">Class 9</option><option value="10">Class 10</option>
             </select>
             <input id="s_mobile" placeholder="Mobile Number">
-            <button onclick="saveStudent()" style="width:100%; margin-top:10px">Save Record</button>`;
+            <div id="extraFields"></div>
+            <button onclick="addExtraField()" style="background:#334155; width:100%; margin:10px 0; font-size:12px">+ Add More Detail</button>
+            <button onclick="saveStudent()" style="width:100%">Save Record</button>`;
         document.getElementById('systemModal').classList.add('active');
+    }
+
+    function addExtraField() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `<input placeholder="Label (e.g. Address)" class="ext-key"><input placeholder="Value" class="ext-val">`;
+        document.getElementById('extraFields').appendChild(div);
     }
 
     async function saveStudent() {
@@ -143,11 +157,64 @@
             class: document.getElementById('s_class').value,
             mobile: document.getElementById('s_mobile').value
         };
+
+        // Add dynamic fields to the data object
+        const keys = document.querySelectorAll('.ext-key');
+        const vals = document.querySelectorAll('.ext-val');
+        keys.forEach((k, i) => { if(k.value) data[k.value] = vals[i].value; });
+
         await db.collection("students").doc(data.id).set(data);
-        alert("Student Added!"); closeModal();
+        alert("Student Saved Successfully!"); closeModal();
     }
 
-    // --- Result Entry Form (Backup Logic Kept) ---
+    // --- Admin Management System ---
+    async function openAdminManager() {
+        toggleFab();
+        document.getElementById('modalBody').innerHTML = `
+            <h3>Manage Admins</h3>
+            <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; margin-bottom:20px;">
+                <input id="newAdminName" placeholder="Admin Name">
+                <input id="newAdminId" placeholder="Login ID">
+                <input id="newAdminPass" type="password" placeholder="Password">
+                <button onclick="addNewAdmin()" style="width:100%">Add Admin Access</button>
+            </div>
+            <div id="adminListContainer">Loading admins...</div>
+        `;
+        document.getElementById('systemModal').classList.add('active');
+        loadAdminList();
+    }
+
+    async function loadAdminList() {
+        const snap = await db.collection("admins").get();
+        let html = "<h4>Current Admins</h4>";
+        snap.forEach(doc => {
+            html += `<div class="admin-list-item">
+                <span><b>${doc.data().name}</b> (${doc.id})</span>
+                <button onclick="deleteAdmin('${doc.id}')" style="padding:5px 10px; background:#ef4444; font-size:10px">Remove</button>
+            </div>`;
+        });
+        document.getElementById("adminListContainer").innerHTML = html;
+    }
+
+    async function addNewAdmin() {
+        const id = document.getElementById("newAdminId").value;
+        const name = document.getElementById("newAdminName").value;
+        const pass = document.getElementById("newAdminPass").value;
+        if(!id || !name || !pass) return alert("Fill all fields");
+        
+        await db.collection("admins").doc(id).set({ name: name, password: pass });
+        alert("New Admin Added!");
+        loadAdminList();
+    }
+
+    async function deleteAdmin(id) {
+        if(confirm("Remove this admin?")) {
+            await db.collection("admins").doc(id).delete();
+            loadAdminList();
+        }
+    }
+
+    // --- Result Entry Form (Unchanged) ---
     function openResultModal() {
         toggleFab();
         document.getElementById('modalBody').innerHTML = `
@@ -177,21 +244,17 @@
         const examName = document.getElementById('r_exam').value;
         const names = document.querySelectorAll('.sub-name');
         const marks = document.querySelectorAll('.sub-marks');
-        
         let subjects = {};
         names.forEach((n, i) => { if(n.value) subjects[n.value] = marks[i].value; });
-
         const docRef = db.collection("results").doc(sid);
         const doc = await docRef.get();
-        
         let data = doc.exists ? doc.data() : { exams: {} };
         data.exams[examName] = { subjects: subjects, date: new Date().toLocaleDateString() };
-        
         await docRef.set(data);
         alert("Result Uploaded!"); closeModal();
     }
 
-    // --- Existing Search & PDF Logic ---
+    // --- Search & Pipeline Logic (Original) ---
     let currentMode = 'details';
     function switchTab(mode) {
         currentMode = mode;
@@ -233,7 +296,6 @@
         doc.save(`${s.name}_result.pdf`);
     }
 
-    // Admission Pipeline Stream
     db.collection("new_requests").onSnapshot(snap => {
         let html = "";
         document.getElementById("countLabel").innerText = snap.size + " NEW";
@@ -241,20 +303,19 @@
             const d = doc.data();
             html += `<div class="req-card">
                 <div><b>${d.name}</b><br><small>Class: ${d.class}</small></div>
-                <button onclick="window.location.href='student-entry.html?reqId=${doc.id}'">Accept</button>
+                <button onclick="approveAdmission('${doc.id}', '${d.name}')">Accept</button>
             </div>`;
         });
         document.getElementById("requestList").innerHTML = html || "No requests";
     });
 
-    async function approveAdmission(reqId, name) {
-        openStudentModal(); 
-    }
+    async function approveAdmission(reqId, name) { openStudentModal(); }
 
     function generatePDF(data, title) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.text(title, 20, 20);
+        // This will now automatically include any dynamic fields added
         doc.autoTable({ startY: 30, body: Object.entries(data) });
         doc.save("record.pdf");
     }
