@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACADEMIX PRO | Ultimate Dashboard</title>
+    <title>ACADEMIX PRO | Master Dashboard</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -14,82 +14,84 @@
 
     <style>
         :root { --primary: #8B0000; --accent: #FF3E3E; --bg: #0f172a; --card-bg: rgba(255, 255, 255, 0.05); --glass: rgba(255, 255, 255, 0.1); --text: #f8fafc; }
-        * { box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        * { box-sizing: border-box; transition: 0.3s; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
         
-        /* Navbar */
         .top-bar { backdrop-filter: blur(20px); background: rgba(139, 0, 0, 0.3); padding: 15px 30px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass); }
-        .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; }
-        .admin-info { display: flex; align-items: center; gap: 15px; }
-
         .container { padding: 25px; max-width: 1300px; margin: auto; }
-        .grid { display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        .grid { display: grid; grid-template-columns: 1fr 380px; gap: 25px; }
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
         
-        /* Cards */
-        .card { background: var(--card-bg); backdrop-filter: blur(10px); padding: 25px; border-radius: 24px; border: 1px solid var(--glass); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .card { background: var(--card-bg); backdrop-filter: blur(10px); padding: 25px; border-radius: 24px; border: 1px solid var(--glass); margin-bottom: 20px; }
         .req-card { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 18px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
         
-        /* Form Elements */
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.4); border: 1px solid var(--glass); border-radius: 12px; color: white; font-size: 15px; }
-        input:focus { border-color: var(--accent); outline: none; }
-        button { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 14px; }
-        button:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4); }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.4); border: 1px solid var(--glass); border-radius: 12px; color: white; }
+        button { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        button:hover { background: var(--accent); transform: translateY(-2px); }
 
-        .btn-pdf { background: #334155; }
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        /* FAB Plus Icon */
+        .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; }
+        .fab-main { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 62, 62, 0.4); }
+        .fab-options { position: absolute; bottom: 70px; right: 0; display: none; flex-direction: column; gap: 10px; }
+        .fab-item { background: white; color: black; padding: 10px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+        .fab-container:hover .fab-options { display: flex; }
 
-        /* Modals */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        /* Search Tabs */
+        .tab-btn { padding: 10px; background: none; border-bottom: 2px solid transparent; flex: 1; border-radius: 0; }
+        .tab-btn.active { border-color: var(--accent); color: var(--accent); }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal.active { display: flex; }
-        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 90%; max-width: 420px; border: 1px solid var(--accent); text-align: center; }
-
-        /* Status colors */
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .badge-new { background: #10b981; color: white; }
+        .modal-content { background: #1e293b; padding: 35px; border-radius: 30px; width: 95%; max-width: 450px; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="top-bar">
     <div class="logo">ACADEMIX <span style="color:var(--accent)">PRO</span></div>
-    <div class="admin-info">
-        <div id="adminDisplay" style="font-weight: 600;">Welcome</div>
-        <button onclick="logout()" style="background: rgba(255,255,255,0.1); padding: 8px 15px; font-size: 12px;">Logout</button>
-    </div>
+    <div id="adminDisplay">Loading...</div>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.1)">Logout</button>
 </div>
 
 <div class="container">
     <div class="grid">
         <div class="main-panel">
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2 style="margin:0;">Admission Pipeline</h2>
-                    <span class="badge badge-new" id="countLabel">0 Pending</span>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>Admission Pipeline</h2>
+                    <span id="countLabel" style="background:#10b981; padding:5px 12px; border-radius:20px; font-size:12px">0 NEW</span>
                 </div>
-                <div id="requestList">Connecting to server...</div>
+                <div id="requestList"></div>
             </div>
         </div>
 
         <div class="sidebar">
             <div class="card">
-                <h3>Student Finder</h3>
-                <input id="enrollSearch" placeholder="Enrollment ID (e.g. 0001)">
-                <button style="width:100%" onclick="findStudent()">🔍 Search Database</button>
-                <div id="searchResult" style="margin-top:20px;"></div>
+                <div style="display:flex; margin-bottom:20px;">
+                    <button class="tab-btn active" id="detailsTab" onclick="switchTab('details')">Profile</button>
+                    <button class="tab-btn" id="resultsTab" onclick="switchTab('results')">Results</button>
+                </div>
+                <input id="finderInput" placeholder="Enrollment ID (e.g. 0002)">
+                <button id="finderBtn" style="width:100%" onclick="mainSearch()">🔍 Run Search</button>
+                <div id="finderResult" style="margin-top:20px;"></div>
             </div>
 
             <div class="card">
-                <h3>Quick Actions</h3>
-                <button onclick="document.getElementById('adminOptions').style.display='block'" style="width:100%; background:#334155; margin-bottom:10px;">⚙️ Admin Settings</button>
-                <div id="adminOptions" style="display:none; padding-top:15px; border-top:1px solid var(--glass);">
-                    <input id="up_name" placeholder="Change Display Name">
-                    <input id="up_key" placeholder="New Security Key">
-                    <button onclick="triggerAuth('update')" style="width:100%">Update Profile</button>
-                </div>
+                <h3>Admin Config</h3>
+                <input id="up_name" placeholder="Name">
+                <input id="up_key" type="password" placeholder="Security Key">
+                <button onclick="triggerUpdate()" style="width:100%">Update Profile</button>
             </div>
         </div>
     </div>
+</div>
+
+<div class="fab-container">
+    <div class="fab-options">
+        <div class="fab-item" onclick="alert('Student form coming soon')">👤 Add Student</div>
+        <div class="fab-item" onclick="alert('Result entry coming soon')">📊 Add Result</div>
+    </div>
+    <div class="fab-main">+</div>
 </div>
 
 <div class="modal" id="systemModal">
@@ -97,7 +99,6 @@
 </div>
 
 <script>
-    // 1. Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
         authDomain: "academix-d221e.firebaseapp.com",
@@ -109,168 +110,143 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 2. Auth & Session Security
     const activeId = localStorage.getItem("activeAdminId");
     const activeName = localStorage.getItem("activeAdminName");
+    if(!activeId) window.location.href = "login.html";
+    document.getElementById("adminDisplay").innerText = "Admin: " + activeName;
 
-    if(!activeId) {
-        window.location.href = "login.html";
-    } else {
-        document.getElementById("adminDisplay").innerText = "Admin: " + activeName;
+    let currentMode = 'details';
+    function switchTab(mode) {
+        currentMode = mode;
+        document.getElementById('detailsTab').classList.toggle('active', mode==='details');
+        document.getElementById('resultsTab').classList.toggle('active', mode==='results');
+        document.getElementById('finderResult').innerHTML = "";
     }
 
-    // 3. Professional PDF Engine
-    function generateProPDF(data, title) {
+    // --- Dynamic Search Logic ---
+    async function mainSearch() {
+        const id = document.getElementById("finderInput").value;
+        const resDiv = document.getElementById("finderResult");
+        if(!id) return;
+
+        if(currentMode === 'details') {
+            const doc = await db.collection("students").doc(id).get();
+            if(doc.exists) {
+                const d = doc.data();
+                resDiv.innerHTML = `
+                <div style="border-left:4px solid #10b981; padding-left:15px">
+                    <h4>${d.name}</h4>
+                    <p>Class: ${d.class} | Parent: ${d.parent || d.father}</p>
+                    <button onclick='generatePDF(${JSON.stringify({...d, id:id})}, "STUDENT_PROFILE")'>Download PDF</button>
+                </div>`;
+            } else resDiv.innerHTML = "Not Found";
+        } else {
+            // Result Search
+            const doc = await db.collection("results").doc(id).get();
+            if(doc.exists) {
+                const exams = doc.data().exams;
+                let html = "<h4>Available Exams</h4>";
+                for(let key in exams) {
+                    html += `<button style="width:100%; margin-bottom:5px; background:#334155" 
+                             onclick='downloadResult("${id}", "${key}")'>${key} - View Result</button>`;
+                }
+                resDiv.innerHTML = html;
+            } else resDiv.innerHTML = "No results found for this ID";
+        }
+    }
+
+    // --- Professional Result PDF ---
+    async function downloadResult(sid, examId) {
+        const sDoc = await db.collection("students").doc(sid).get();
+        const rDoc = await db.collection("results").doc(sid).get();
+        const s = sDoc.data();
+        const examData = rDoc.data().exams[examId];
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
         // Header
-        doc.setFillColor(139, 0, 0);
-        doc.rect(0, 0, 210, 45, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont("helvetica", "bold");
-        doc.text("ACADEMIX EDUCATION", 105, 20, null, null, "center");
-        doc.setFontSize(10);
-        doc.text("Official Administration Record System | Session 2026-27", 105, 30, null, null, "center");
+        doc.setFillColor(139,0,0); doc.rect(0,0,210,40,'F');
+        doc.setTextColor(255); doc.setFontSize(22); doc.text("ACADEMIX PROGRESS REPORT", 105, 25, null,null,"center");
         
-        // Body
-        doc.setTextColor(40, 40, 40);
-        doc.setFontSize(16);
-        doc.text(title, 20, 60);
-        
-        // Data Formatting
-        const tableData = [
-            ["STUDENT NAME", data.name || "N/A"],
-            ["FATHER'S NAME", data.father || data.parent || "N/A"],
-            ["CLASS ASSIGNED", data.class || "N/A"],
-            ["CONTACT NUMBER", data.mobile || "N/A"],
-            ["ENROLLMENT ID", data.id || "PENDING"],
-            ["TIMESTAMP", new Date().toLocaleString()]
-        ];
+        // Student Info
+        doc.setTextColor(0); doc.setFontSize(12);
+        doc.text(`Student: ${s.name}`, 20, 50);
+        doc.text(`Enrollment ID: ${sid}`, 20, 57);
+        doc.text(`Examination: ${examId}`, 150, 50);
 
+        // Subject Table
+        const rows = Object.entries(examData.subjects).map(([sub, marks]) => [sub, marks, "100"]);
         doc.autoTable({
-            startY: 70,
-            head: [['Property', 'Information']],
-            body: tableData,
+            startY: 65,
+            head: [['Subject', 'Marks Obtained', 'Max Marks']],
+            body: rows,
             theme: 'grid',
-            headStyles: { fillColor: [139, 0, 0], fontSize: 12 },
-            styles: { fontSize: 11, cellPadding: 8 }
+            headStyles: {fillColor: [139,0,0]}
         });
 
-        // Footer
-        doc.setFontSize(9);
-        doc.text("Generated by Academix Pro - Authorized Personnel Only", 105, 285, null, null, "center");
-        
-        doc.save(`${data.name || 'student'}_record.pdf`);
+        doc.save(`${s.name}_${examId}.pdf`);
     }
 
-    // 4. Live Stream: New Requests
+    // --- Admission Logic ---
     db.collection("new_requests").onSnapshot(snap => {
         let html = "";
-        document.getElementById("countLabel").innerText = snap.size + " Pending";
-        
+        document.getElementById("countLabel").innerText = snap.size + " NEW";
         snap.forEach(doc => {
             const d = doc.data();
             html += `
             <div class="req-card">
-                <div>
-                    <h4 style="margin:0; font-size:18px;">${d.name}</h4>
-                    <span style="opacity:0.6; font-size:13px;">Class: ${d.class} | Father: ${d.father}</span>
-                </div>
-                <div class="btn-row">
-                    <button class="btn-pdf" onclick='generateProPDF(${JSON.stringify(d)}, "NEW ADMISSION REQUEST")'>📄 PDF</button>
-                    <button onclick="openEnroll('${doc.id}', '${d.name}')" style="background:#10b981">Accept</button>
-                    <button onclick="deleteReq('${doc.id}')" style="background:#ef4444">✖</button>
+                <div><b>${d.name}</b><br><small>Class: ${d.class}</small></div>
+                <div style="display:flex; gap:5px">
+                    <button style="background:#10b981" onclick="approveAdmission('${doc.id}', '${d.name}')">Accept</button>
+                    <button style="background:#ef4444" onclick="deleteReq('${doc.id}')">✖</button>
                 </div>
             </div>`;
         });
-        document.getElementById("requestList").innerHTML = html || "<p style='opacity:0.5; text-align:center;'>No new requests found.</p>";
+        document.getElementById("requestList").innerHTML = html;
     });
 
-    // 5. Enrollment Process
-    async function openEnroll(reqId, name) {
-        // Auto ID Generation
-        const students = await db.collection("students").get();
-        let max = 0;
-        students.forEach(s => { if(parseInt(s.id) > max) max = parseInt(s.id); });
+    async function approveAdmission(reqId, name) {
+        const snap = await db.collection("students").get();
+        let max = 0; snap.forEach(s => { if(parseInt(s.id) > max) max = parseInt(s.id); });
         const nextID = (max + 1).toString().padStart(4, '0');
 
         document.getElementById("modalContent").innerHTML = `
-            <h2 style="color:var(--accent)">Finalize Admission</h2>
-            <p>Assigning ID to <b>${name}</b></p>
-            <input id="finalID" value="${nextID}" style="text-align:center; font-size:24px; font-weight:800; color:var(--accent);">
-            <div class="btn-row">
-                <button onclick="confirmAdmission('${reqId}')" style="flex:1">Issue Enrollment</button>
-                <button onclick="closeModal()" style="background:none; color:white;">Cancel</button>
-            </div>`;
+            <h3>Enroll Student</h3>
+            <p>${name}</p>
+            <input id="finalID" value="${nextID}" style="text-align:center; font-size:20px;">
+            <button onclick="finalize('${reqId}')" style="width:100%">Confirm Enrollment</button>
+            <button onclick="closeModal()" style="background:none; color:white; width:100%">Cancel</button>`;
         document.getElementById("systemModal").classList.add("active");
     }
 
-    async function confirmAdmission(reqId) {
-        const id = document.getElementById("finalID").value;
+    async function finalize(reqId) {
+        const newID = document.getElementById("finalID").value;
         const snap = await db.collection("new_requests").doc(reqId).get();
-        const d = snap.data();
-
-        // Save to permanent students
-        await db.collection("students").doc(id).set({
-            ...d,
-            id: id,
-            enrolledBy: activeName,
-            admissionDate: new Date().toLocaleDateString()
-        });
-
-        // Delete from requests
+        await db.collection("students").doc(newID).set({...snap.data(), id: newID});
         await db.collection("new_requests").doc(reqId).delete();
-        alert("Admission Confirmed!");
-        closeModal();
+        alert("Success!"); closeModal();
     }
 
-    // 6. Student Finder
-    async function findStudent() {
-        const id = document.getElementById("enrollSearch").value;
-        if(!id) return;
-        
-        const doc = await db.collection("students").doc(id).get();
-        const res = document.getElementById("searchResult");
-
-        if(doc.exists) {
-            const d = doc.data();
-            res.innerHTML = `
-                <div style="background:rgba(16,185,129,0.1); padding:20px; border-radius:15px; border:1px solid #10b981;">
-                    <h4 style="margin:0">${d.name}</h4>
-                    <p style="font-size:12px; margin:5px 0;">ID: ${id} | Class: ${d.class}<br>Father: ${d.parent || d.father}</p>
-                    <button style="width:100%; font-size:12px; padding:8px; background:#10b981" 
-                            onclick='generateProPDF(${JSON.stringify({...d, id:id})}, "OFFICIAL STUDENT RECORD")'>
-                        Download Data
-                    </button>
-                </div>`;
-        } else {
-            res.innerHTML = `<p style="color:#ef4444; text-align:center;">Student ID not found!</p>`;
-        }
+    // --- PDF Generic ---
+    function generatePDF(data, title) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(title, 20, 20);
+        doc.autoTable({ startY: 30, body: Object.entries(data) });
+        doc.save(`${data.name}.pdf`);
     }
 
-    // 7. Admin Auth & Update
-    async function triggerAuth(type) {
-        const key = prompt("Security Check: Enter your Key");
-        const adminDoc = await db.collection("admins").doc(activeId).get();
-
-        if(key === adminDoc.data().key) {
-            if(type === 'update') {
-                const nName = document.getElementById("up_name").value || activeName;
-                const nKey = document.getElementById("up_key").value || adminDoc.data().key;
-                await db.collection("admins").doc(activeId).update({ name: nName, key: nKey });
-                localStorage.setItem("activeAdminName", nName);
-                alert("Profile Updated!"); location.reload();
-            }
-        } else { alert("Verification Failed!"); }
-    }
-
-    // 8. Global Utils
+    // --- Utils ---
     function closeModal() { document.getElementById("systemModal").classList.remove("active"); }
     function logout() { localStorage.clear(); window.location.href = "login.html"; }
-    async function deleteReq(id) { if(confirm("Reject this admission?")) await db.collection("new_requests").doc(id).delete(); }
-
+    async function deleteReq(id) {
+        if(confirm("Confirm Delete?")) {
+            const key = prompt("Enter Key:");
+            const admin = await db.collection("admins").doc(activeId).get();
+            if(key === admin.data().key) await db.collection("new_requests").doc(id).delete();
+        }
+    }
 </script>
 </body>
 </html>
