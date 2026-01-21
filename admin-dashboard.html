@@ -80,8 +80,8 @@
 
 <div class="fab-container" id="fabMenu">
     <div class="fab-options">
-        <div class="fab-item" onclick="openStudentModal()">👤 Direct Student Entry</div>
-        <div class="fab-item" onclick="openResultModal()">📊 Enter Exam Result</div>
+        <div class="fab-item" onclick="window.location.href='student-entry.html'">👤 Direct Student Entry</div>
+        <div class="fab-item" onclick="window.location.href='student-results.html'">📊 Enter Exam Result</div>
     </div>
     <div class="fab-main" onclick="toggleFab()">+</div>
 </div>
@@ -114,7 +114,7 @@
     function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); }
     function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
 
-    // --- Student Entry Form ---
+    // --- Student Entry Form (Backup Logic Kept) ---
     async function openStudentModal() {
         toggleFab();
         const snap = await db.collection("students").get();
@@ -147,7 +147,7 @@
         alert("Student Added!"); closeModal();
     }
 
-    // --- Result Entry Form ---
+    // --- Result Entry Form (Backup Logic Kept) ---
     function openResultModal() {
         toggleFab();
         document.getElementById('modalBody').innerHTML = `
@@ -241,15 +241,14 @@
             const d = doc.data();
             html += `<div class="req-card">
                 <div><b>${d.name}</b><br><small>Class: ${d.class}</small></div>
-                <button onclick="approveAdmission('${doc.id}', '${d.name}')">Accept</button>
+                <button onclick="window.location.href='student-entry.html?reqId=${doc.id}'">Accept</button>
             </div>`;
         });
         document.getElementById("requestList").innerHTML = html || "No requests";
     });
 
     async function approveAdmission(reqId, name) {
-        // Same logic as student entry with auto-id...
-        openStudentModal(); // Opens form to verify and save
+        openStudentModal(); 
     }
 
     function generatePDF(data, title) {
