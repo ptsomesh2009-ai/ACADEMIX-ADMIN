@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACADEMIX PRO | Admin Dashboard</title>
+    <title>ACADEMIX PRO | Final Dashboard</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -14,29 +14,24 @@
         * { box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
         
-        /* Layout */
         .top-bar { backdrop-filter: blur(20px); background: rgba(139, 0, 0, 0.3); padding: 15px 30px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass); }
         .container { padding: 25px; max-width: 1200px; margin: auto; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         
-        /* Cards */
         .card { background: var(--card-bg); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; border: 1px solid var(--glass); margin-bottom: 20px; }
         .req-card { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 12px; border: 1px solid rgba(255,255,255,0.05); }
         
-        /* UI Elements */
         input, select { width: 100%; padding: 12px; margin: 8px 0; background: rgba(0,0,0,0.3); border: 1px solid var(--glass); border-radius: 10px; color: white; }
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
         button:hover { background: var(--accent); transform: translateY(-2px); }
         .btn-row { display: flex; gap: 10px; margin-top: 12px; }
 
-        /* FAB Plus System */
         .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; align-items: center; }
         .main-fab { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .mini-fab { width: 45px; height: 45px; background: var(--text); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; cursor: pointer; opacity: 0; transform: translateY(20px); pointer-events: none; font-size: 20px; }
         .fab-container.active .mini-fab { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .fab-container.active .main-fab { transform: rotate(45deg); background: #334155; }
 
-        /* Modals */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal.active { display: flex; }
         .modal-content { background: #1e293b; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; border: 1px solid var(--accent); text-align: center; }
@@ -49,7 +44,10 @@
 
 <div class="top-bar">
     <h2 style="margin:0; font-size: 1.2rem;">ACADEMIX <span style="color:var(--accent)">PRO</span></h2>
-    <div id="adminDisplay" style="font-size: 0.9rem; opacity: 0.8;">Admin Loading...</div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="adminDisplay" style="font-size: 0.9rem; opacity: 0.8;">Loading...</div>
+        <button onclick="logout()" style="width: auto; padding: 5px 12px; font-size: 12px; background: rgba(255,255,255,0.1);">Logout</button>
+    </div>
 </div>
 
 <div class="container">
@@ -64,12 +62,14 @@
                 <h3>MANAGE ADMIN</h3>
                 <button onclick="document.getElementById('adminOptions').classList.toggle('show')" style="background:#334155;">🛡️ Settings</button>
                 <div class="admin-options" id="adminOptions">
+                    <p style="font-size: 11px; opacity: 0.6;">Update your own profile:</p>
                     <input id="up_name" placeholder="New Display Name">
                     <input id="up_key" placeholder="New Security Key">
                     <button onclick="triggerAuth('update')">Update Profile</button>
                     <hr style="opacity:0.1; margin:15px 0;">
+                    <p style="font-size: 11px; opacity: 0.6;">Add new staff:</p>
                     <input id="add_name" placeholder="Staff Name">
-                    <input id="add_id" placeholder="Staff ID (admin2)">
+                    <input id="add_id" placeholder="Staff ID (e.g. admin2)">
                     <input id="add_key" placeholder="Assign Key">
                     <button onclick="triggerAuth('add')" style="background:#444;">Add Staff</button>
                 </div>
@@ -86,8 +86,7 @@
 </div>
 
 <div class="modal" id="systemModal">
-    <div class="modal-content" id="modalContent">
-        </div>
+    <div class="modal-content" id="modalContent"></div>
 </div>
 
 <div class="fab-container" id="fabMenu">
@@ -108,6 +107,17 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    
+    // AUTH CHECK: Jo login hai wahi dikhega
+    const currentAdminId = localStorage.getItem("activeAdminId");
+    const currentAdminName = localStorage.getItem("activeAdminName");
+
+    if(!currentAdminId) {
+        window.location.href = "login.html"; 
+    } else {
+        document.getElementById("adminDisplay").innerText = "Welcome, " + currentAdminName;
+    }
+
     let currentTask = null;
 
     // --- REALTIME REQUESTS ---
@@ -158,12 +168,12 @@
         alert("Student Enrolled!"); closeModal();
     }
 
-    // --- ADMIN SECURITY LOGIC ---
+    // --- ADMIN SECURITY LOGIC (BUG FIXED) ---
     function triggerAuth(action) {
         currentTask = { type: action };
         document.getElementById("modalContent").innerHTML = `
             <h3>Security Check</h3>
-            <p>Enter your <b>Security Key</b> to continue.</p>
+            <p>Enter <b>Your</b> Security Key to continue.</p>
             <input type="password" id="authKey" placeholder="••••" style="text-align:center; letter-spacing:5px;">
             <div class="btn-row">
                 <button onclick="closeModal()" style="background:#444">Cancel</button>
@@ -174,14 +184,19 @@
 
     async function verifyAndExecute() {
         const keyInput = document.getElementById("authKey").value;
-        const adminDoc = await db.collection("admins").doc("admin1").get();
+        // Apni ID se key verify karo
+        const adminDoc = await db.collection("admins").doc(currentAdminId).get();
         
         if(keyInput === adminDoc.data().key) {
             if(currentTask.type === 'update') {
-                await db.collection("admins").doc("admin1").update({
-                    name: document.getElementById("up_name").value,
-                    key: document.getElementById("up_key").value
+                const newName = document.getElementById("up_name").value || currentAdminName;
+                const newKey = document.getElementById("up_key").value || adminDoc.data().key;
+                
+                await db.collection("admins").doc(currentAdminId).update({
+                    name: newName,
+                    key: newKey
                 });
+                localStorage.setItem("activeAdminName", newName);
             } else if(currentTask.type === 'add') {
                 await db.collection("admins").doc(document.getElementById("add_id").value).set({
                     name: document.getElementById("add_name").value,
@@ -195,6 +210,8 @@
     // --- UTILITIES ---
     async function rejectReq(id) { if(confirm("Reject this?")) await db.collection("new_requests").doc(id).delete(); }
     function closeModal() { document.getElementById("systemModal").classList.remove("active"); }
+    function logout() { localStorage.clear(); window.location.href = "login.html"; }
+    
     function findStudent() {
         const id = document.getElementById("enrollSearch").value;
         db.collection("students").doc(id).get().then(doc => {
@@ -202,7 +219,6 @@
             res.innerHTML = doc.exists ? `<span style="color:#10b981">Found: ${doc.data().name}</span>` : `<span style="color:#ef4444">Not Found</span>`;
         });
     }
-    db.collection("admins").doc("admin1").onSnapshot(d => { if(d.exists) document.getElementById("adminDisplay").innerText = "Welcome, " + d.data().name; });
 </script>
 
 </body>
