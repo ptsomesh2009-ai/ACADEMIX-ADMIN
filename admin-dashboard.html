@@ -13,7 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* AAPKA ORIGINAL PREMIUM UI STYLE - BILKUL SAME */
         :root { --primary: #8B0000; --accent: #FF3E3E; --bg: #0f172a; --card-bg: rgba(255, 255, 255, 0.05); --glass: rgba(255, 255, 255, 0.1); --text: #f8fafc; }
         * { box-sizing: border-box; transition: 0.3s; }
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
@@ -45,6 +44,9 @@
         .tab-btn.active { border-color: var(--accent); color: var(--accent); font-weight: 700; }
         
         .dynamic-row { display: flex; gap: 8px; margin-bottom: 5px; }
+        .admin-list-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-top: 5px; display: flex; justify-content: space-between; }
+        
+        /* New Pipeline Actions Styling */
         .pipeline-actions { display: flex; gap: 5px; }
         .btn-small { padding: 8px 12px; font-size: 11px; }
         .btn-reject { background: #475569; }
@@ -102,7 +104,6 @@
 </div>
 
 <script>
-    // --- FIREBASE INITIALIZATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
         authDomain: "academix-d221e.firebaseapp.com",
@@ -121,43 +122,167 @@
 
     function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); }
     function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
-    function logout() { localStorage.clear(); window.location.href="index.html"; }
 
-    // --- FIX 1: OPTIMIZED UNIQUE ID GENERATION (NO SERVER OVERLOAD) ---
-    async function getSafeNextID() {
+    // --- Student Entry Form (Modified to handle Auto-fill) ---
+    async function openStudentModal(prefillData = null, reqDocId = null) {
+        if(!prefillData) toggleFab();
+        
         const snap = await db.collection("students").get();
-        let max = 0;
-        snap.forEach(doc => {
-            let num = parseInt(doc.id);
-            if(num > max) max = num;
-        });
-        return (max + 1).toString().padStart(4, '0');
+        let max = 0; snap.forEach(s => { if(parseInt(s.id) > max) max = parseInt(s.id); });
+        const nextID = (max + 1).toString().padStart(4, '0');
+
+        // Logic to extract class number from string like "Class 9"
+        let classValue = "1";
+        if(prefillData && prefillData.class) {
+            classValue = prefillData.class.replace(/\D/g,'') || "1";
+        }
+
+        document.getElementById('modalBody').innerHTML = `
+            <h3>${prefillData ? 'Approve' : 'Add New'} Student</h3>
+            <input id="s_id" value="${nextID}" placeholder="Enrollment ID">
+            <input id="s_name" value="${prefillData ? prefillData.name : ''}" placeholder="Full Name">
+            <input id="s_father" value="${prefillData ? (prefillData.father || '') : ''}" placeholder="Father's Name">
+            <select id="s_class">
+                <option value="1" ${classValue=="1"?'selected':''}>Class 1</option>
+                <option value="2" ${classValue=="2"?'selected':''}>Class 2</option>
+                <option value="9" ${classValue=="9"?'selected':''}>Class 9</option>
+                <option value="10" ${classValue=="10"?'selected':''}>Class 10</option>
+            </select>
+            <input id="s_mobile" value="${prefillData ? (prefillData.mobile || '') : ''}" placeholder="Mobile Number">
+            <div id="extraFields">
+                ${prefillData && prefillData.address ? `<div class="dynamic-row"><input value="Address" class="ext-key"><input value="${prefillData.address}" class="ext-val"></div>` : ''}
+            </div>
+            <button onclick="addExtraField()" style="background:#334155; width:100%; margin:10px 0; font-size:12px">+ Add More Detail</button>
+            <button onclick="saveStudent('${reqDocId}')" style="width:100%">Confirm & Save</button>`;
+        document.getElementById('systemModal').classList.add('active');
     }
 
-    // --- FIX 2: PIPELINE LISTENER (PREVENTS DUPLICATE UI CARDS) ---
+    function addExtraField() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `<input placeholder="Label" class="ext-key"><input placeholder="Value" class="ext-val">`;
+        document.getElementById('extraFields').appendChild(div);
+    }
+
+    async function saveStudent(reqDocId = "null") {
+        const data = {
+            id: document.getElementById('s_id').value,
+            name: document.getElementById('s_name').value,
+            father: document.getElementById('s_father').value,
+            class: document.getElementById('s_class').value,
+            mobile: document.getElementById('s_mobile').value
+        };
+
+        const keys = document.querySelectorAll('.ext-key');
+        const vals = document.querySelectorAll('.ext-val');
+        keys.forEach((k, i) => { if(k.value) data[k.value] = vals[i].value; });
+
+        await db.collection("students").doc(data.id).set(data);
+        
+        // Clean up: If this was from a request, delete the request
+        if(reqDocId !== "null" && reqDocId !== "undefined") {
+            await db.collection("new_requests").doc(reqDocId).delete();
+        }
+
+        alert("Student Successfully Registered!"); closeModal();
+    }
+
+    // --- Admin Management ---
+    async function openAdminManager() {
+        toggleFab();
+        document.getElementById('modalBody').innerHTML = `
+            <h3>Manage Admins</h3>
+            <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; margin-bottom:20px;">
+                <input id="newAdminName" placeholder="Admin Name">
+                <input id="newAdminId" placeholder="Login ID">
+                <input id="newAdminPass" type="password" placeholder="Password">
+                <button onclick="addNewAdmin()" style="width:100%">Add Admin Access</button>
+            </div>
+            <div id="adminListContainer">Loading admins...</div>`;
+        document.getElementById('systemModal').classList.add('active');
+        loadAdminList();
+    }
+
+    async function loadAdminList() {
+        const snap = await db.collection("admins").get();
+        let html = "<h4>Current Admins</h4>";
+        snap.forEach(doc => {
+            html += `<div class="admin-list-item">
+                <span><b>${doc.data().name}</b> (${doc.id})</span>
+                <button onclick="deleteAdmin('${doc.id}')" style="padding:5px 10px; background:#ef4444; font-size:10px">Remove</button>
+            </div>`;
+        });
+        document.getElementById("adminListContainer").innerHTML = html;
+    }
+
+    async function addNewAdmin() {
+        const id = document.getElementById("newAdminId").value;
+        const name = document.getElementById("newAdminName").value;
+        const pass = document.getElementById("newAdminPass").value;
+        if(!id || !name || !pass) return alert("Fill all fields");
+        await db.collection("admins").doc(id).set({ name: name, password: pass });
+        loadAdminList();
+    }
+
+    async function deleteAdmin(id) {
+        if(confirm("Remove this admin?")) {
+            await db.collection("admins").doc(id).delete();
+            loadAdminList();
+        }
+    }
+
+    // --- Result Logic ---
+    function openResultModal() {
+        toggleFab();
+        document.getElementById('modalBody').innerHTML = `
+            <h3>Enter Marks</h3>
+            <input id="r_id" placeholder="Student ID (e.g. 0001)">
+            <input id="r_exam" placeholder="Exam Name">
+            <div id="subjectList"><div style="display:flex; gap:5px"><input placeholder="Subject" class="sub-name"><input placeholder="Marks" class="sub-marks" style="width:80px"></div></div>
+            <button onclick="addSubjectRow()" style="background:#334155; width:100%; margin:10px 0">+ Add Subject</button>
+            <button onclick="saveResult()" style="width:100%">Upload Result</button>`;
+        document.getElementById('systemModal').classList.add('active');
+    }
+
+    function addSubjectRow() {
+        const div = document.createElement('div'); div.style.display = 'flex'; div.style.gap = '5px';
+        div.innerHTML = `<input placeholder="Subject" class="sub-name"><input placeholder="Marks" class="sub-marks" style="width:80px">`;
+        document.getElementById('subjectList').appendChild(div);
+    }
+
+    async function saveResult() {
+        const sid = document.getElementById('r_id').value;
+        const examName = document.getElementById('r_exam').value;
+        const names = document.querySelectorAll('.sub-name');
+        const marks = document.querySelectorAll('.sub-marks');
+        let subjects = {};
+        names.forEach((n, i) => { if(n.value) subjects[n.value] = marks[i].value; });
+        const docRef = db.collection("results").doc(sid);
+        const doc = await docRef.get();
+        let data = doc.exists ? doc.data() : { exams: {} };
+        data.exams[examName] = { subjects: subjects, date: new Date().toLocaleDateString() };
+        await docRef.set(data);
+        alert("Result Uploaded!"); closeModal();
+    }
+
+    // --- Pipeline Stream (With Reject & PDF Fix) ---
     db.collection("new_requests").onSnapshot(snap => {
         let html = "";
         document.getElementById("countLabel").innerText = snap.size + " NEW";
-        if(snap.empty) {
-            document.getElementById("requestList").innerHTML = "No requests";
-            return;
-        }
         snap.forEach(doc => {
             const d = doc.data();
-            const safeData = JSON.stringify(d).replace(/'/g, "&apos;");
             html += `<div class="req-card">
                 <div><b>${d.name}</b><br><small>${d.class} | ${d.mobile}</small></div>
                 <div class="pipeline-actions">
-                    <button class="btn-small btn-pdf" onclick='generateProfessionalPDF(${safeData}, "REGISTRATION SLIP")'>📄</button>
+                    <button class="btn-small btn-pdf" onclick='generatePDF(${JSON.stringify(d)}, "REGISTRATION SLIP")'>📄</button>
                     <button class="btn-small" onclick='approveAdmission("${doc.id}")'>Accept</button>
                     <button class="btn-small btn-reject" onclick='rejectAdmission("${doc.id}")'>×</button>
                 </div>
             </div>`;
         });
-        document.getElementById("requestList").innerHTML = html;
+        document.getElementById("requestList").innerHTML = html || "No requests";
     });
 
-    // --- FIX 3: ADMISSION APPROVAL WITH AUTO-FILL ---
     async function approveAdmission(reqId) {
         const doc = await db.collection("new_requests").doc(reqId).get();
         if(doc.exists) {
@@ -165,69 +290,13 @@
         }
     }
 
-    async function openStudentModal(prefill = null, reqDocId = null) {
-        if(!prefill) toggleFab();
-        
-        // Loader while getting ID
-        document.getElementById('modalBody').innerHTML = "<h4>Generating Enrollment ID...</h4>";
-        document.getElementById('systemModal').classList.add('active');
-        
-        const nextID = await getSafeNextID();
-
-        let classVal = prefill ? (prefill.class.replace(/\D/g,'') || "1") : "1";
-
-        document.getElementById('modalBody').innerHTML = `
-            <h3>${prefill ? 'Approve' : 'Direct'} Enrollment</h3>
-            <label style="font-size:11px; opacity:0.6;">Enrollment ID (Auto-Generated)</label>
-            <input id="s_id" value="${nextID}" readonly style="background:rgba(0,0,0,0.6)">
-            <input id="s_name" value="${prefill ? prefill.name : ''}" placeholder="Student Name">
-            <input id="s_father" value="${prefill ? (prefill.father || '') : ''}" placeholder="Father's Name">
-            <select id="s_class">
-                <option value="1" ${classVal=="1"?'selected':''}>Class 1</option>
-                <option value="6" ${classVal=="6"?'selected':''}>Class 6</option>
-                <option value="9" ${classVal=="9"?'selected':''}>Class 9</option>
-                <option value="10" ${classVal=="10"?'selected':''}>Class 10</option>
-            </select>
-            <input id="s_mobile" value="${prefill ? (prefill.mobile || '') : ''}" placeholder="Mobile Number">
-            <div id="extraFields">
-                ${prefill && prefill.address ? `<div class="dynamic-row"><input value="Address" class="ext-key"><input value="${prefill.address}" class="ext-val"></div>` : ''}
-            </div>
-            <button onclick="addExtraField()" style="background:#334155; width:100%; margin:10px 0; font-size:12px">+ Add Custom Detail</button>
-            <button onclick="saveStudent('${reqDocId}')" style="width:100%; padding:18px; font-size:16px;">💾 Finalize & Register</button>`;
-    }
-
-    async function saveStudent(reqDocId) {
-        const id = document.getElementById('s_id').value;
-        const data = {
-            id: id,
-            name: document.getElementById('s_name').value,
-            father: document.getElementById('s_father').value,
-            class: document.getElementById('s_class').value,
-            mobile: document.getElementById('s_mobile').value,
-            timestamp: new Date().getTime()
-        };
-
-        const keys = document.querySelectorAll('.ext-key');
-        const vals = document.querySelectorAll('.ext-val');
-        keys.forEach((k, i) => { if(k.value) data[k.value] = vals[i].value; });
-
-        // Save to students collection
-        await db.collection("students").doc(id).set(data);
-        
-        // Remove from pipeline
-        if(reqDocId && reqDocId !== "null") {
-            await db.collection("new_requests").doc(reqDocId).delete();
-        }
-
-        alert("Enrollment Success: " + id);
-        closeModal();
-    }
-
     async function rejectAdmission(reqId) {
-        if(confirm("Reject this request?")) await db.collection("new_requests").doc(reqId).delete();
+        if(confirm("Are you sure you want to reject and delete this request?")) {
+            await db.collection("new_requests").doc(reqId).delete();
+        }
     }
 
-    // --- SEARCH & UTILITY (ORIGINAL LOGIC) ---
+    // --- Existing Utility ---
     let currentMode = 'details';
     function switchTab(mode) {
         currentMode = mode;
@@ -238,51 +307,48 @@
     async function mainSearch() {
         const id = document.getElementById("finderInput").value;
         const resDiv = document.getElementById("finderResult");
-        if(!id) return;
-
         if(currentMode === 'details') {
             const doc = await db.collection("students").doc(id).get();
             if(doc.exists) {
                 const d = doc.data();
-                resDiv.innerHTML = `<div class="card" style="border:1px solid var(--accent)">
-                    <h4 style="margin:0">${d.name}</h4>
-                    <p style="font-size:12px; opacity:0.7">Class: ${d.class}</p>
-                    <button onclick='generateProfessionalPDF(${JSON.stringify(d)}, "STUDENT PROFILE")' style="width:100%; font-size:12px">Download PDF</button>
-                </div>`;
+                resDiv.innerHTML = `<div class="card" style="background:rgba(16,185,129,0.1)"><h4>${d.name}</h4><p>Class: ${d.class}</p><button onclick='generatePDF(${JSON.stringify(d)}, "PROFILE")'>PDF</button></div>`;
             } else resDiv.innerHTML = "Not Found";
+        } else {
+            const doc = await db.collection("results").doc(id).get();
+            if(doc.exists) {
+                let html = "<h4>Exams Found:</h4>";
+                Object.keys(doc.data().exams).forEach(ex => { html += `<button onclick="downloadResult('${id}','${ex}')" style="width:100%; margin-bottom:5px">${ex}</button>`; });
+                resDiv.innerHTML = html;
+            } else resDiv.innerHTML = "No Results";
         }
     }
 
-    // PROFESSIONAL PDF GENERATION
-    function generateProfessionalPDF(data, title) {
+    async function downloadResult(sid, exId) {
+        const s = (await db.collection("students").doc(sid).get()).data();
+        const r = (await db.collection("results").doc(sid).get()).data().exams[exId];
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFillColor(139, 0, 0);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("JANTRAJI DEVI VIDYA MANDIR", 105, 18, {align: "center"});
-        doc.setFontSize(10);
-        doc.text(title + " | SESSION 2026-27", 105, 28, {align: "center"});
-        
-        doc.autoTable({ 
-            startY: 45, 
-            body: Object.entries(data).filter(x => x[0] !== 'timestamp'), 
-            theme: 'grid',
-            headStyles: {fillColor: [139, 0, 0]}
-        });
-        doc.save(`${data.name || 'Student'}_Record.pdf`);
+        doc.text(`Report: ${exId}`, 20, 20);
+        doc.text(`Student: ${s.name}`, 20, 30);
+        doc.autoTable({ startY: 40, head: [['Subject', 'Marks']], body: Object.entries(r.subjects) });
+        doc.save(`${s.name}_result.pdf`);
     }
 
-    // Placeholder functions for remaining FAB options (keep your existing ones)
-    function addExtraField() {
-        const div = document.createElement('div');
-        div.className = 'dynamic-row';
-        div.innerHTML = `<input placeholder="Label" class="ext-key"><input placeholder="Value" class="ext-val">`;
-        document.getElementById('extraFields').appendChild(div);
+    function generatePDF(data, title) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.text("JAI DEVI VIDYA MANDIR", 105, 15, {align: "center"});
+        doc.setFontSize(10);
+        doc.text(title, 105, 22, {align: "center"});
+        doc.autoTable({ startY: 30, body: Object.entries(data), theme: 'grid' });
+        doc.save(`${data.name || 'record'}.pdf`);
     }
-    function openAdminManager() { alert("Admin Panel Loading..."); }
-    function openResultModal() { alert("Result Entry Loading..."); }
+
+    function logout() { localStorage.clear(); window.location.href="index.html"; }
 </script>
 </body>
 </html>
+
+
+
