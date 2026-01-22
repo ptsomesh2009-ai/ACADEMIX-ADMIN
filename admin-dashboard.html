@@ -157,10 +157,17 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
             <input id="s_name" value="${prefillData ? prefillData.name : ''}" placeholder="Full Name">
             <input id="s_father" value="${prefillData ? (prefillData.father || '') : ''}" placeholder="Father's Name">
             <select id="s_class">
-                <option value="1" ${classValue=="1"?'selected':''}>Class 1</option>
-                <option value="2" ${classValue=="2"?'selected':''}>Class 2</option>
-                <option value="9" ${classValue=="9"?'selected':''}>Class 9</option>
-                <option value="10" ${classValue=="10"?'selected':''}>Class 10</option>
+                <option value="PG" ${classValue=="PG"?'selected':''}>PG</option>
+                <option value="LKG" ${classValue=="LKG"?'selected':''}>LKG</option>
+                <option value="UKG" ${classValue=="UKG"?'selected':''}>UKG</option>
+                <option value="1" ${classValue=="1"?'selected':''}>Class 1st</option>
+                <option value="2" ${classValue=="2"?'selected':''}>Class 2nd</option>
+                <option value="3" ${classValue=="3"?'selected':''}>Class 3rd</option>
+                <option value="4" ${classValue=="4"?'selected':''}>Class 4rth</option>
+                <option value="5" ${classValue=="5"?'selected':''}>Class 5th</option>
+                <option value="6" ${classValue=="6"?'selected':''}>Class 6th</option>
+                <option value="7" ${classValue=="7"?'selected':''}>Class 7th</option>
+                <option value="8" ${classValue=="8"?'selected':''}>Class 8th</option>
             </select>
             <input id="s_mobile" value="${prefillData ? (prefillData.mobile || '') : ''}" placeholder="Mobile Number">
             <div id="extraFields">
@@ -411,6 +418,7 @@ function generatePDF(data, title) {
 </script>
 </body>
 </html>
+
 
 
 
