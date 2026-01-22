@@ -350,45 +350,86 @@
         doc.save(`${s.name}_result.pdf`);
     }
 
-    function generatePDF(data, title) {
+function generatePDF(data, title) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        doc.setFont("helvetica", "bold");
-        doc.text("JANTRAJI DEVI VIDYA MANDIR LAMBHUA", 105, 15, {align: "center"});
-        doc.setFontSize(10);
-        doc.text(title, 105, 22, {align: "center"});
+        // 1. School Logo & Header
+        // Note: 'logo.png' dashboard.html ke same folder me honi chahiye
+        try {
+            doc.addImage('logo.png', 'PNG', 15, 8, 20, 20); 
+        } catch (e) {
+            console.log("Logo file not found, skipping...");
+        }
 
-        let imageUrl = null;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("JANTRAJI DEVI VIDYA MANDIR LAMBHUA", 40, 18);
+        doc.setFontSize(10);
+        doc.text(title, 105, 25, {align: "center"});
+        doc.line(15, 30, 195, 30); // Header Line
+
+        let studentPhotoUrl = null;
+        let aadharImageUrl = null;
         const tableBody = [];
 
+        // 2. Data Sorting (Photo vs Aadhar vs Text)
         Object.entries(data).forEach(([key, value]) => {
-            if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image'))) {
-                imageUrl = value; 
+            const k = key.toLowerCase();
+            const v = String(value);
+
+            if ((k.includes('photo') || k.includes('image')) && (v.startsWith('http') || v.startsWith('data:image'))) {
+                studentPhotoUrl = v;
+            } else if (k.includes('aadhar') && (v.startsWith('http') || v.startsWith('data:image'))) {
+                aadharImageUrl = v;
             } else {
                 tableBody.push([key.toUpperCase(), value]);
             }
         });
 
+        // 3. Student Details Table
         doc.autoTable({ 
-            startY: 30, 
+            startY: 35, 
             body: tableBody, 
             theme: 'grid',
-            margin: { right: imageUrl ? 60 : 15 } 
+            styles: { fontSize: 9 },
+            margin: { right: studentPhotoUrl ? 60 : 15 } 
         });
 
-        if (imageUrl) {
+        let finalY = doc.lastAutoTable.finalY;
+
+        // 4. Photo in Corner (Top Right)
+        if (studentPhotoUrl) {
             try {
-                doc.addImage(imageUrl, 'JPEG', 155, 30, 40, 40);
+                doc.addImage(studentPhotoUrl, 'JPEG', 155, 35, 40, 45);
+                doc.setDrawColor(0);
+                doc.rect(155, 35, 40, 45); // Photo Border
             } catch (e) {
-                doc.text("Image Error", 155, 35);
+                doc.text("Photo Error", 165, 55);
             }
         }
 
-        doc.save(`${data.name || 'record'}.pdf`);
+        // 5. Aadhar Image at Bottom
+        if (aadharImageUrl) {
+            if (finalY + 60 > 280) { doc.addPage(); finalY = 20; } // New page if no space
+            
+            try {
+                doc.setFont("helvetica", "bold");
+                doc.text("AADHAR CARD DOCUMENT:", 15, finalY + 15);
+                doc.addImage(aadharImageUrl, 'JPEG', 15, finalY + 20, 80, 50);
+                doc.setDrawColor(150);
+                doc.rect(15, finalY + 20, 80, 50); // Aadhar Border
+            } catch (e) {
+                console.error("Aadhar image render error", e);
+            }
+        }
+
+        // 6. Save PDF
+        doc.save(`${data.name || 'student'}_record.pdf`);
     }
 
     function logout() { localStorage.clear(); window.location.href="index.html"; }
 </script>
 </body>
 </html>
+
