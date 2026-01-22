@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACADEMIX PRO | Ultimate Admin Panel</title>
+    <title>ACADEMIX PRO | Ultimate Multi-Function Admin Panel</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
+        /* --- CSS VARIABLES & THEMEING --- */
         :root { 
             --primary: #8B0000; 
             --accent: #FF3E3E; 
@@ -20,141 +21,119 @@
             --glass: rgba(255, 255, 255, 0.1); 
             --text: #f8fafc; 
             --success: #10b981;
+            --sidebar-width: 420px;
         }
 
-        * { box-sizing: border-box; transition: all 0.25s ease; }
-        
+        /* --- CORE STYLING --- */
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         body { 
-            margin: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            min-height: 100vh; 
-            overflow-x: hidden; 
+            margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text); 
+            min-height: 100vh; overflow-x: hidden; 
         }
 
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 
-        /* Navigation Bar */
+        /* --- LAYOUT COMPONENTS --- */
         .top-bar { 
-            backdrop-filter: blur(20px); 
-            background: rgba(139, 0, 0, 0.3); 
-            padding: 15px 40px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            backdrop-filter: blur(25px); background: rgba(15, 23, 42, 0.8); 
+            padding: 15px 50px; position: sticky; top: 0; z-index: 1000; 
+            display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 1px solid var(--glass);
-            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
         }
 
-        .logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; }
-        .logo span { color: var(--accent); }
+        .logo { font-weight: 800; font-size: 26px; letter-spacing: -1px; cursor: default; }
+        .logo span { color: var(--accent); text-shadow: 0 0 15px rgba(255, 62, 62, 0.4); }
 
-        /* Layout Grid */
-        .container { padding: 30px; max-width: 1400px; margin: auto; }
-        .main-grid { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
-
-        /* Card System */
-        .card { 
-            background: var(--card-bg); 
-            backdrop-filter: blur(15px); 
-            padding: 30px; 
-            border-radius: 28px; 
-            border: 1px solid var(--glass); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
-
-        h2 { margin-top: 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-
-        /* Pipeline List */
-        .pipeline-item { 
-            background: rgba(0,0,0,0.2); 
-            padding: 20px; 
-            border-radius: 20px; 
-            margin-top: 15px; 
-            border-left: 5px solid var(--accent); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* Inputs & Buttons */
-        input, select, textarea { 
-            width: 100%; padding: 14px; margin: 10px 0; 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid var(--glass); 
-            border-radius: 14px; color: white; 
-            font-family: inherit;
-        }
+        .container { padding: 40px; max-width: 1500px; margin: auto; }
+        .main-grid { display: grid; grid-template-columns: 1fr var(--sidebar-width); gap: 35px; }
         
-        input:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.1); }
+        @media (max-width: 1150px) { 
+            .main-grid { grid-template-columns: 1fr; } 
+            .top-bar { padding: 15px 25px; }
+        }
+
+        /* --- CARD & PIPELINE SYSTEM --- */
+        .card { 
+            background: var(--card-bg); backdrop-filter: blur(15px); 
+            padding: 35px; border-radius: 32px; border: 1px solid var(--glass); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+            height: fit-content;
+        }
+
+        .pipeline-item { 
+            background: rgba(0,0,0,0.3); padding: 22px; border-radius: 22px; 
+            margin-top: 18px; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 6px solid var(--accent);
+            animation: slideUp 0.4s ease forwards;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- INPUTS & UI ELEMENTS --- */
+        input, select, textarea { 
+            width: 100%; padding: 15px; margin: 12px 0; 
+            background: rgba(0,0,0,0.4); border: 1px solid var(--glass); 
+            border-radius: 16px; color: white; font-family: inherit; font-size: 14px;
+        }
+        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255, 62, 62, 0.1); }
 
         button { 
-            padding: 12px 24px; background: var(--primary); 
-            color: white; border: none; border-radius: 14px; 
-            font-weight: 700; cursor: pointer; 
-            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 28px; background: var(--primary); 
+            color: white; border: none; border-radius: 16px; 
+            font-weight: 700; cursor: pointer; display: inline-flex; 
+            align-items: center; gap: 10px; font-size: 14px;
         }
+        button:hover { background: var(--accent); transform: translateY(-3px); box-shadow: 0 12px 24px rgba(255, 62, 62, 0.3); }
+        button:active { transform: translateY(-1px); }
 
-        button:hover { background: var(--accent); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255, 62, 62, 0.3); }
-
+        .btn-small { padding: 10px 15px; font-size: 12px; }
         .btn-reject { background: #334155; }
         .btn-pdf { background: var(--success); }
 
-        /* Tabs */
-        .tab-group { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 15px; }
-        .tab-btn { flex: 1; padding: 10px; background: none; border-radius: 10px; color: #94a3b8; font-size: 14px; }
-        .tab-btn.active { background: var(--primary); color: white; }
+        /* --- TAB SYSTEM --- */
+        .tab-group { display: flex; gap: 12px; margin-bottom: 25px; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 18px; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 12px; background: none; color: #94a3b8; border: none; }
+        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-        /* Modal System */
+        /* --- MODAL SYSTEM --- */
         .modal-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(10px); display: none; 
-            justify-content: center; align-items: center; z-index: 2000; 
-            padding: 20px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
+            backdrop-filter: blur(15px); display: none; 
+            justify-content: center; align-items: center; z-index: 2000; padding: 25px;
         }
         .modal-overlay.active { display: flex; }
-        
         .modal-content { 
-            background: #1e293b; width: 100%; max-width: 550px; 
-            max-height: 90vh; overflow-y: auto; 
-            padding: 40px; border-radius: 35px; 
-            position: relative; border: 1px solid var(--glass);
+            background: #1e293b; width: 100%; max-width: 600px; 
+            max-height: 85vh; overflow-y: auto; padding: 45px; 
+            border-radius: 40px; position: relative; border: 1px solid var(--accent);
         }
 
-        .extra-field-row { display: flex; gap: 10px; margin-bottom: 8px; }
-
-        /* FAB Menu */
-        .fab-wrapper { position: fixed; bottom: 40px; right: 40px; z-index: 1500; }
-        .fab-btn { 
-            width: 70px; height: 70px; border-radius: 50%; 
-            background: var(--accent); color: white; 
-            font-size: 32px; box-shadow: 0 15px 30px rgba(255, 62, 62, 0.4); 
-            cursor: pointer; display: flex; justify-content: center; align-items: center;
+        /* --- FAB MENU --- */
+        .fab-container { position: fixed; bottom: 45px; right: 45px; z-index: 1500; }
+        .fab-main { 
+            width: 75px; height: 75px; border-radius: 50%; 
+            background: var(--accent); color: white; font-size: 35px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; box-shadow: 0 20px 40px rgba(255, 62, 62, 0.4); 
         }
         .fab-options { 
-            position: absolute; bottom: 85px; right: 0; 
-            display: none; flex-direction: column; gap: 15px; 
-            align-items: flex-end; 
+            position: absolute; bottom: 95px; right: 0; 
+            display: none; flex-direction: column; gap: 15px; align-items: flex-end; 
         }
-        .fab-wrapper.active .fab-options { display: flex; }
+        .fab-container.active .fab-options { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .fab-item { 
-            background: white; color: #0f172a; padding: 12px 25px; 
+            background: white; color: #0f172a; padding: 14px 28px; 
             border-radius: 50px; font-weight: 800; font-size: 14px; 
-            white-space: nowrap; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        /* Status Badges */
-        .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        /* --- BADGES --- */
+        .badge { padding: 6px 14px; border-radius: 30px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
         .badge-new { background: var(--success); color: white; }
     </style>
 </head>
@@ -162,55 +141,55 @@
 
 <div class="top-bar">
     <div class="logo">ACADEMIX <span>PRO</span></div>
-    <div id="adminName">Admin: ...</div>
-    <button onclick="logout()" style="background:rgba(255,255,255,0.1)">Logout</button>
+    <div id="adminBadge" style="font-weight: 600; opacity: 0.8;">Admin: Loading...</div>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.05); border: 1px solid var(--glass);">Sign Out</button>
 </div>
 
 <div class="container">
     <div class="main-grid">
         <div class="content-left">
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
                     <h2 style="margin:0;">Admission Pipeline</h2>
-                    <span id="reqCount" class="badge badge-new">0 NEW REQUESTS</span>
+                    <span id="pipelineCount" class="badge badge-new">0 PENDING</span>
                 </div>
-                <div id="pipelineList">Checking database...</div>
+                <div id="pipelineList">Connecting to Server...</div>
             </div>
         </div>
 
         <div class="content-right">
             <div class="card">
                 <div class="tab-group">
-                    <button class="tab-btn active" id="tab-details" onclick="setSearchMode('details')">Search Student</button>
-                    <button class="tab-btn" id="tab-results" onclick="setSearchMode('results')">Search Results</button>
+                    <button class="tab-btn active" id="tab-prof" onclick="toggleSearch('details')">Profile Search</button>
+                    <button class="tab-btn" id="tab-res" onclick="toggleSearch('results')">Result Finder</button>
                 </div>
-                <input id="searchQuery" placeholder="Enter Enrollment ID...">
-                <button onclick="executeSearch()" style="width:100%; justify-content:center;">🔍 Run Search Engine</button>
+                <input id="mainSearchInput" placeholder="Enter Enrollment ID (e.g. 0001)">
+                <button onclick="runGlobalSearch()" style="width:100%; justify-content:center;">⚡ Execute Search Engine</button>
                 
-                <div id="searchOutput" style="margin-top:25px;"></div>
+                <div id="searchResponse" style="margin-top:30px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="fab-wrapper" id="fabMenu">
+<div class="fab-container" id="masterFab">
     <div class="fab-options">
-        <div class="fab-item" onclick="openAdminManager()">Manage Admin Access</div>
-        <div class="fab-item" onclick="launchStudentModal()">Direct Enrollment</div>
-        <div class="fab-item" onclick="launchResultModal()">Upload Exam Marks</div>
+        <div class="fab-item" onclick="openAdminSettings()">🔑 Manage System Admins</div>
+        <div class="fab-item" onclick="showStudentForm()">👤 Direct Student Enrollment</div>
+        <div class="fab-item" onclick="showResultForm()">📊 Upload Academic Marks</div>
     </div>
-    <div class="fab-btn" onclick="document.getElementById('fabMenu').classList.toggle('active')">+</div>
+    <div class="fab-main" onclick="document.getElementById('masterFab').classList.toggle('active')">+</div>
 </div>
 
-<div class="modal-overlay" id="mainModal">
+<div class="modal-overlay" id="systemModal">
     <div class="modal-content">
-        <span onclick="closeModal()" style="position:absolute; top:25px; right:25px; cursor:pointer; font-size:30px; opacity:0.5;">×</span>
-        <div id="modalBody"></div>
+        <span onclick="closeModal()" style="position:absolute; top:30px; right:35px; cursor:pointer; font-size:35px; opacity:0.3;">×</span>
+        <div id="modalContentArea"></div>
     </div>
 </div>
 
 <script>
-    // --- Configuration ---
+    /* --- CORE FIREBASE INITIALIZATION --- */
     const firebaseConfig = {
         apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
         authDomain: "academix-d221e.firebaseapp.com",
@@ -222,243 +201,223 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Security Check
-    const activeId = localStorage.getItem("activeAdminId");
-    const activeAdminName = localStorage.getItem("activeAdminName");
-    if(!activeId) window.location.href = "login.html";
-    document.getElementById("adminName").innerText = "Admin: " + activeAdminName;
+    /* --- AUTHENTICATION CHECK --- */
+    const sessionID = localStorage.getItem("activeAdminId");
+    const sessionName = localStorage.getItem("activeAdminName");
+    if(!sessionID) window.location.href = "login.html";
+    document.getElementById("adminBadge").innerText = "Admin: " + sessionName;
 
-    function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
+    function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
     function logout() { localStorage.clear(); window.location.href="index.html"; }
 
-    // --- Dynamic ID & Uniqueness System ---
-    async function getNextEnrollmentID() {
-        const snapshot = await db.collection("students").get();
-        let maxID = 0;
-        snapshot.forEach(doc => {
-            const idInt = parseInt(doc.id);
-            if (!isNaN(idInt) && idInt > maxID) maxID = idInt;
+    /* --- UNIQUE ENROLLMENT ID GENERATOR --- */
+    async function generateSmartID() {
+        const snap = await db.collection("students").get();
+        let high = 0;
+        snap.forEach(doc => {
+            const val = parseInt(doc.id);
+            if(val > high) high = val;
         });
-        return (maxID + 1).toString().padStart(4, '0');
+        return (high + 1).toString().padStart(4, '0');
     }
 
-    // --- Student Enrollment (With Additional Info) ---
-    async function launchStudentModal(prefill = null, requestId = null) {
-        document.getElementById('fabMenu').classList.remove('active');
-        const nextId = await getNextEnrollmentID();
-
-        let html = `
-            <h3 style="margin-top:0;">${prefill ? 'Approve Admission' : 'Register New Student'}</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                <div><label style="font-size:12px; font-weight:700;">Enrollment ID</label><input id="form_id" value="${nextId}" readonly style="background:rgba(0,0,0,0.3)"></div>
-                <div><label style="font-size:12px; font-weight:700;">Student Name</label><input id="form_name" value="${prefill ? prefill.name : ''}"></div>
-                <div><label style="font-size:12px; font-weight:700;">Father's Name</label><input id="form_father" value="${prefill ? prefill.father : ''}"></div>
-                <div><label style="font-size:12px; font-weight:700;">Class</label><input id="form_class" value="${prefill ? prefill.class : ''}"></div>
-            </div>
-            <label style="font-size:12px; font-weight:700;">Mobile Number</label><input id="form_mobile" value="${prefill ? prefill.mobile : ''}">
-            
-            <h4 style="margin:20px 0 10px 0; color:var(--accent);">Additional Information</h4>
-            <div id="dynamicFields">
-                ${prefill && prefill.address ? `<div class="extra-field-row"><input class="f-key" value="Address"><input class="f-val" value="${prefill.address}"></div>` : ''}
-                ${prefill && prefill.dob ? `<div class="extra-field-row"><input class="f-key" value="DOB"><input class="f-val" value="${prefill.dob}"></div>` : ''}
-            </div>
-            <button onclick="addNewFieldRow()" style="background:#475569; width:100%; margin-bottom:20px; font-size:12px;">+ Add More Info Field</button>
-            
-            <button onclick="commitStudentToDB('${requestId}')" style="width:100%; padding:18px;">Confirm & Finalize Registration</button>
-        `;
-
-        document.getElementById('modalBody').innerHTML = html;
-        document.getElementById('mainModal').classList.add('active');
-    }
-
-    function addNewFieldRow() {
-        const div = document.createElement('div');
-        div.className = 'extra-field-row';
-        div.innerHTML = `<input placeholder="Label (e.g. Blood Group)" class="f-key"><input placeholder="Value" class="f-val">`;
-        document.getElementById('dynamicFields').appendChild(div);
-    }
-
-    async function commitStudentToDB(reqId) {
-        const id = document.getElementById('form_id').value;
-        const studentObj = {
-            id: id,
-            name: document.getElementById('form_name').value,
-            father: document.getElementById('form_father').value,
-            class: document.getElementById('form_class').value,
-            mobile: document.getElementById('form_mobile').value,
-            registeredAt: new Date().toLocaleString()
-        };
-
-        // Capture Dynamic Fields
-        const keys = document.querySelectorAll('.f-key');
-        const vals = document.querySelectorAll('.f-val');
-        keys.forEach((k, i) => { if(k.value) studentObj[k.value] = vals[i].value; });
-
-        // Final Security Check for Unique ID
-        const check = await db.collection("students").doc(id).get();
-        if(check.exists) return alert("Error: ID " + id + " already taken! Please refresh.");
-
-        await db.collection("students").doc(id).set(studentObj);
-        
-        // If approved from pipeline, delete the request
-        if(reqId !== "null" && reqId !== "undefined") {
-            await db.collection("new_requests").doc(reqId).delete();
-        }
-
-        alert("Student Successfully Enrolled with ID: " + id);
-        closeModal();
-    }
-
-    // --- Pipeline Stream ---
+    /* --- PIPELINE REAL-TIME MONITORING --- */
     db.collection("new_requests").onSnapshot(snap => {
-        let html = "";
-        document.getElementById("reqCount").innerText = snap.size + " NEW REQUESTS";
+        const list = document.getElementById("pipelineList");
+        document.getElementById("pipelineCount").innerText = snap.size + " PENDING";
         
         if(snap.empty) {
-            html = `<div style="text-align:center; padding:40px; opacity:0.5;">No pending admission requests.</div>`;
-        } else {
-            snap.forEach(doc => {
-                const d = doc.data();
-                const dString = JSON.stringify(d).replace(/'/g, "&apos;");
-                html += `
-                    <div class="pipeline-item">
-                        <div>
-                            <span style="font-weight:800; font-size:16px;">${d.name}</span><br>
-                            <small style="opacity:0.6;">${d.class} | ${d.mobile}</small>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn-pdf btn-small" onclick='printOfficialSlip(${dString})'>📄</button>
-                            <button onclick='launchStudentModal(${dString}, "${doc.id}")' style="font-size:12px;">Accept</button>
-                            <button class="btn-reject" onclick='deleteRequest("${doc.id}")'>×</button>
-                        </div>
-                    </div>
-                `;
-            });
+            list.innerHTML = `<div style="text-align:center; padding:50px; opacity:0.4;">Pipeline is clear. No new requests.</div>`;
+            return;
         }
-        document.getElementById("pipelineList").innerHTML = html;
+
+        let html = "";
+        snap.forEach(doc => {
+            const data = doc.data();
+            const dataString = JSON.stringify(data).replace(/'/g, "&apos;");
+            html += `
+                <div class="pipeline-item">
+                    <div>
+                        <strong style="font-size:18px;">${data.name}</strong><br>
+                        <small style="opacity:0.6;">Class: ${data.class} | Mob: ${data.mobile}</small>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-pdf btn-small" onclick='generateMasterPDF(${dataString}, "REGISTRATION")'>📄</button>
+                        <button onclick='showStudentForm(${dataString}, "${doc.id}")' class="btn-small">Approve</button>
+                        <button class="btn-reject btn-small" onclick='deleteRequest("${doc.id}")'>×</button>
+                    </div>
+                </div>`;
+        });
+        list.innerHTML = html;
     });
 
     async function deleteRequest(id) {
-        if(confirm("Reject and delete this request?")) await db.collection("new_requests").doc(id).delete();
+        if(confirm("Permanently reject this admission request?")) {
+            await db.collection("new_requests").doc(id).delete();
+        }
     }
 
-    // --- PDF Generation (Professional Letterhead) ---
-    function printOfficialSlip(data) {
+    /* --- STUDENT ENROLLMENT FORM (MAIN FEATURE) --- */
+    async function showStudentForm(prefill = null, reqId = null) {
+        document.getElementById('masterFab').classList.remove('active');
+        const nextID = await generateSmartID();
+        
+        let html = `
+            <h2 style="color:var(--accent)">${prefill ? 'Finalize Admission' : 'Manual Enrollment'}</h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                <div><label>Enrollment ID</label><input id="f_id" value="${nextID}" readonly style="opacity:0.7"></div>
+                <div><label>Student Name</label><input id="f_name" value="${prefill ? prefill.name : ''}"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                <div><label>Father's Name</label><input id="f_father" value="${prefill ? (prefill.father || '') : ''}"></div>
+                <div><label>Class</label><input id="f_class" value="${prefill ? prefill.class : ''}"></div>
+            </div>
+            <label>Contact Number</label><input id="f_mobile" value="${prefill ? prefill.mobile : ''}">
+            
+            <h4 style="margin:25px 0 10px 0; border-bottom:1px solid var(--glass); padding-bottom:5px;">Extended Information</h4>
+            <div id="dynamicContainer">
+                ${prefill && prefill.address ? `<div style="display:flex; gap:10px;"><input class="k-ext" value="Address"><input class="v-ext" value="${prefill.address}"></div>` : ''}
+            </div>
+            <button onclick="addDynamicRow()" style="background:#334155; width:100%; margin:10px 0; font-size:12px;">+ Add Custom Field (DOB, Blood, etc)</button>
+            <button onclick="saveEnrollmentToDB('${reqId}')" style="width:100%; margin-top:20px; padding:20px; font-size:16px;">💾 Save and Register Student</button>
+        `;
+        document.getElementById("modalContentArea").innerHTML = html;
+        document.getElementById("systemModal").classList.add('active');
+    }
+
+    function addDynamicRow() {
+        const div = document.createElement('div');
+        div.style.display = 'flex'; div.style.gap = '10px';
+        div.innerHTML = `<input placeholder="Field Name" class="k-ext"><input placeholder="Value" class="v-ext">`;
+        document.getElementById("dynamicContainer").appendChild(div);
+    }
+
+    async function saveEnrollmentToDB(reqId) {
+        const id = document.getElementById("f_id").value;
+        const student = {
+            id: id,
+            name: document.getElementById("f_name").value,
+            father: document.getElementById("f_father").value,
+            class: document.getElementById("f_class").value,
+            mobile: document.getElementById("f_mobile").value,
+            enrolledDate: new Date().toLocaleDateString()
+        };
+
+        const keys = document.querySelectorAll('.k-ext');
+        const vals = document.querySelectorAll('.v-ext');
+        keys.forEach((k, i) => { if(k.value) student[k.value] = vals[i].value; });
+
+        await db.collection("students").doc(id).set(student);
+        if(reqId && reqId !== "null") await db.collection("new_requests").doc(reqId).delete();
+
+        alert("Enrollment Successful! ID: " + id);
+        closeModal();
+    }
+
+    /* --- PROFESSIONAL PDF ENGINE (THE HEART OF MAIN CODE) --- */
+    function generateMasterPDF(data, mode) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        const schoolName = "JANTRAJI DEVI VIDYA MANDIR";
 
-        // 1. Branding Header
+        // Header Design
         doc.setFillColor(139, 0, 0);
         doc.rect(0, 0, 210, 45, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
+        doc.setFontSize(26);
         doc.setFont("helvetica", "bold");
-        doc.text("JANTRAJI DEVI VIDYA MANDIR", 105, 20, { align: "center" });
+        doc.text(schoolName, 105, 20, { align: "center" });
         doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
         doc.text("LAMBHUA, SULTANPUR, UTTAR PRADESH", 105, 28, { align: "center" });
-        doc.setFont("helvetica", "bold");
-        doc.text("OFFICIAL ADMISSION REGISTRATION SLIP - SESSION 2026-27", 105, 36, { align: "center" });
+        doc.text(`OFFICIAL ${mode} DOCUMENT - SESSION 2026`, 105, 36, { align: "center" });
 
-        // 2. Student Photo Frame
+        // Photo Frame logic
         if(data.photo) {
             doc.setDrawColor(139,0,0);
             doc.rect(160, 50, 35, 45);
             doc.addImage(data.photo, 'JPEG', 161, 51, 33, 43);
         }
 
-        // 3. Information Table
+        // Table Content
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(14);
-        doc.text("STUDENT PARTICULARS", 20, 60);
+        doc.text("STUDENT PROFILE DATA", 20, 60);
 
-        const tableRows = [
-            ["Full Name", (data.name || 'N/A').toUpperCase()],
-            ["Father's Name", (data.father || 'N/A')],
-            ["Class Applied", (data.class || 'N/A')],
-            ["Mobile Number", (data.mobile || 'N/A')],
-            ["Date of Birth", (data.dob || 'N/A')],
-            ["Address", (data.address || 'N/A')]
-        ];
+        const rows = Object.entries(data)
+            .filter(([k]) => !['photo', 'aadharImg'].includes(k))
+            .map(([k, v]) => [k.toUpperCase(), v]);
 
         doc.autoTable({
             startY: 65,
             margin: { left: 20, right: 60 },
-            body: tableRows,
-            theme: 'striped',
-            headStyles: { fillColor: [139,0,0] },
-            styles: { fontSize: 10, cellPadding: 4 }
+            body: rows,
+            theme: 'grid',
+            styles: { cellPadding: 5 },
+            headStyles: { fillColor: [139,0,0] }
         });
 
-        // 4. Aadhar Preview
-        let finalY = doc.lastAutoTable.finalY + 15;
+        // Aadhar Preview if exists
         if(data.aadharImg) {
-            doc.setFontSize(12);
-            doc.text("ID PROOF (AADHAR CARD):", 20, finalY);
-            doc.addImage(data.aadharImg, 'JPEG', 20, finalY + 5, 100, 60);
-            finalY += 75;
+            let y = doc.lastAutoTable.finalY + 15;
+            doc.text("DOCUMENT PROOF:", 20, y);
+            doc.addImage(data.aadharImg, 'JPEG', 20, y + 5, 100, 60);
         }
 
-        // 5. Footer & Verification
-        doc.setFontSize(10);
-        doc.line(20, finalY + 20, 70, finalY + 20);
-        doc.text("Parent/Guardian Sign", 20, finalY + 26);
-        doc.line(140, finalY + 20, 190, finalY + 20);
-        doc.text("Authorized School Seal", 140, finalY + 26);
-
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text("System Generated Document - No Physical Stamp Required", 105, 285, { align: "center" });
-
-        doc.save(`Slip_${data.name}.pdf`);
+        doc.save(`${data.name}_${mode}.pdf`);
     }
 
-    // --- Search Engine ---
-    let searchMode = 'details';
-    function setSearchMode(m) {
-        searchMode = m;
-        document.getElementById('tab-details').classList.toggle('active', m==='details');
-        document.getElementById('tab-results').classList.toggle('active', m==='results');
+    /* --- SEARCH & RESULT LOGIC --- */
+    let activeMode = 'details';
+    function toggleSearch(m) {
+        activeMode = m;
+        document.getElementById('tab-prof').classList.toggle('active', m==='details');
+        document.getElementById('tab-res').classList.toggle('active', m==='results');
     }
 
-    async function executeSearch() {
-        const query = document.getElementById("searchQuery").value;
-        const output = document.getElementById("searchOutput");
-        if(!query) return;
+    async function runGlobalSearch() {
+        const q = document.getElementById("mainSearchInput").value;
+        const out = document.getElementById("searchResponse");
+        if(!q) return;
 
-        if(searchMode === 'details') {
-            const snap = await db.collection("students").doc(query).get();
-            if(snap.exists) {
-                const d = snap.data();
-                const dStr = JSON.stringify(d).replace(/'/g, "&apos;");
-                output.innerHTML = `
-                    <div class="card" style="background:rgba(16,185,129,0.1); border:1px solid var(--success);">
-                        <h4 style="margin:0;">${d.name}</h4>
-                        <p style="font-size:12px; margin:5px 0;">Class: ${d.class} | ID: ${d.id}</p>
-                        <button onclick='printOfficialSlip(${dStr})' style="width:100%; font-size:12px; margin-top:10px;">Download Data PDF</button>
+        if(activeMode === 'details') {
+            const doc = await db.collection("students").doc(q).get();
+            if(doc.exists) {
+                const d = doc.data();
+                out.innerHTML = `
+                    <div class="card" style="border-left: 5px solid var(--success);">
+                        <h3>${d.name}</h3>
+                        <p>ID: ${d.id} | Class: ${d.class}</p>
+                        <button onclick='generateMasterPDF(${JSON.stringify(d)}, "PROFILE")' style="width:100%">Download PDF Profile</button>
                     </div>`;
-            } else output.innerHTML = "Student ID Not Found.";
+            } else out.innerHTML = "Student not found.";
         } else {
-            const snap = await db.collection("results").doc(query).get();
-            if(snap.exists) {
-                let html = "<h4>Exam Records:</h4>";
-                Object.keys(snap.data().exams).forEach(ex => {
-                    html += `<button onclick="exportResult('${query}','${ex}')" style="width:100%; margin-bottom:10px; background:#334155;">Export ${ex}</button>`;
+            const doc = await db.collection("results").doc(q).get();
+            if(doc.exists) {
+                let h = "<h4>Available Exams:</h4>";
+                Object.keys(doc.data().exams).forEach(ex => {
+                    h += `<button onclick="exportResult('${q}','${ex}')" style="width:100%; margin-bottom:10px; background:#475569;">Download ${ex}</button>`;
                 });
-                output.innerHTML = html;
-            } else output.innerHTML = "No results found for this ID.";
+                out.innerHTML = h;
+            } else out.innerHTML = "No results found.";
         }
     }
 
-    // --- Results & Admin Management (Placeholders) ---
-    function launchResultModal() {
-        alert("Result Entry System: Use the same logic as student modal to enter marks. Implementation ready upon request.");
+    /* --- RESULT & ADMIN SETTINGS (PLACEHOLDERS) --- */
+    function showResultForm() {
+        document.getElementById('masterFab').classList.remove('active');
+        document.getElementById("modalContentArea").innerHTML = `
+            <h3>Upload Marks</h3>
+            <input id="r_sid" placeholder="Student ID">
+            <input id="r_exam" placeholder="Exam Name (e.g. Annual)">
+            <textarea id="r_marks" placeholder="Subject:Marks (One per line)"></textarea>
+            <button onclick="saveMarks()" style="width:100%">Upload Data</button>
+        `;
+        document.getElementById("systemModal").classList.add('active');
     }
-    
-    async function openAdminManager() {
-        alert("Admin Access Management: Open Firestore 'admins' collection to manage passwords manually for now.");
+
+    function openAdminSettings() {
+        alert("Admin Management: Please use Firebase Console to manage 'admins' collection for high security.");
     }
 </script>
-
 </body>
 </html>
