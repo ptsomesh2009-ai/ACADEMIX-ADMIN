@@ -34,7 +34,6 @@
         .btn-reject { background: #475569; }
         .btn-pdf { background: #10b981; }
 
-        /* Floating Action Menu */
         .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; }
         .fab-main { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 62, 62, 0.4); }
         .fab-options { position: absolute; bottom: 80px; right: 0; display: none; flex-direction: column; gap: 12px; }
@@ -47,14 +46,16 @@
         
         .tab-btn { padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; flex: 1; color: var(--text); cursor: pointer; }
         .tab-btn.active { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+        
+        .admin-list-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
 <div class="top-bar">
-    <div class="logo">ACADEMIX <span style="color:var(--accent)">PRO</span></div>
-    <div id="adminDisplay">Admin: Loading...</div>
-    <button onclick="logout()" style="background:rgba(255,255,255,0.1)">Logout</button>
+    <div class="logo" style="font-weight:800; font-size:22px;">ACADEMIX <span style="color:var(--accent)">PRO</span></div>
+    <div id="adminDisplay" style="font-weight:600; font-size:14px; opacity:0.8;">Admin: Loading...</div>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.1); padding: 8px 15px;">Logout</button>
 </div>
 
 <div class="container">
@@ -62,10 +63,10 @@
         <div class="main-panel">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Admission Pipeline</h2>
-                    <span id="countLabel" style="background:#10b981; padding:5px 12px; border-radius:20px; font-size:12px">0 NEW</span>
+                    <h2 style="margin:0;">Admission Pipeline</h2>
+                    <span id="countLabel" style="background:#10b981; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700;">0 NEW</span>
                 </div>
-                <div id="requestList">Loading requests...</div>
+                <div id="requestList" style="margin-top:10px;">Checking for new requests...</div>
             </div>
         </div>
 
@@ -75,7 +76,7 @@
                     <button class="tab-btn active" id="detailsTab" onclick="switchTab('details')">Profile</button>
                     <button class="tab-btn" id="resultsTab" onclick="switchTab('results')">Results</button>
                 </div>
-                <input id="finderInput" placeholder="Enrollment ID">
+                <input id="finderInput" placeholder="Enter Enrollment ID">
                 <button id="finderBtn" style="width:100%" onclick="mainSearch()">🔍 Run Search</button>
                 <div id="finderResult" style="margin-top:20px;"></div>
             </div>
@@ -94,12 +95,13 @@
 
 <div class="modal" id="systemModal">
     <div class="modal-content">
-        <span onclick="closeModal()" style="position:absolute; top:20px; right:20px; cursor:pointer; font-size:24px;">×</span>
+        <span onclick="closeModal()" style="position:absolute; top:20px; right:20px; cursor:pointer; font-size:24px; opacity:0.5;">×</span>
         <div id="modalBody"></div>
     </div>
 </div>
 
 <script>
+    // --- Firebase Initialization ---
     const firebaseConfig = {
         apiKey: "AIzaSyClB9tZ1ClSyTa27rqDy-TtXSXFKOygy4k",
         authDomain: "academix-d221e.firebaseapp.com",
@@ -111,81 +113,33 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Check Login
     const activeId = localStorage.getItem("activeAdminId");
     const activeName = localStorage.getItem("activeAdminName");
     if(!activeId) window.location.href = "login.html";
     document.getElementById("adminDisplay").innerText = "Admin: " + activeName;
 
+    // UI Helpers
     function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); }
     function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
-
-    // --- Student Entry Logic ---
-    async function openStudentModal(prefillData = null, reqDocId = null) {
-        if(!prefillData) toggleFab();
-        const snap = await db.collection("students").get();
-        let max = 0; snap.forEach(s => { if(parseInt(s.id) > max) max = parseInt(s.id); });
-        const nextID = (max + 1).toString().padStart(4, '0');
-
-        document.getElementById('modalBody').innerHTML = `
-            <h3>${prefillData ? 'Approve' : 'Add New'} Student</h3>
-            <label>Enrollment ID</label><input id="s_id" value="${nextID}">
-            <label>Name</label><input id="s_name" value="${prefillData ? prefillData.name : ''}">
-            <label>Father</label><input id="s_father" value="${prefillData ? (prefillData.father || '') : ''}">
-            <label>Class</label><input id="s_class" value="${prefillData ? (prefillData.class || '') : ''}">
-            <label>Mobile</label><input id="s_mobile" value="${prefillData ? (prefillData.mobile || '') : ''}">
-            <button onclick="saveStudent('${reqDocId}')" style="width:100%; margin-top:15px">Confirm & Save</button>`;
-        document.getElementById('systemModal').classList.add('active');
+    
+    let currentMode = 'details';
+    function switchTab(mode) {
+        currentMode = mode;
+        document.getElementById('detailsTab').classList.toggle('active', mode==='details');
+        document.getElementById('resultsTab').classList.toggle('active', mode==='results');
     }
 
-    async function saveStudent(reqDocId) {
-        const data = {
-            id: document.getElementById('s_id').value,
-            name: document.getElementById('s_name').value,
-            father: document.getElementById('s_father').value,
-            class: document.getElementById('s_class').value,
-            mobile: document.getElementById('s_mobile').value
-        };
-        await db.collection("students").doc(data.id).set(data);
-        if(reqDocId !== "null") await db.collection("new_requests").doc(reqDocId).delete();
-        alert("Success!"); closeModal();
-    }
-
-    // --- Pipeline ---
-    db.collection("new_requests").onSnapshot(snap => {
-        let html = "";
-        document.getElementById("countLabel").innerText = snap.size + " NEW";
-        snap.forEach(doc => {
-            const d = doc.data();
-            const dataStr = JSON.stringify(d).replace(/'/g, "&apos;");
-            html += `<div class="req-card">
-                <div><b>${d.name}</b><br><small>${d.class} | ${d.mobile}</small></div>
-                <div class="pipeline-actions">
-                    <button class="btn-small btn-pdf" onclick='generateOfficialPDF(${dataStr})'>📄</button>
-                    <button class="btn-small" onclick='approveAdmission("${doc.id}")'>Accept</button>
-                    <button class="btn-small btn-reject" onclick='rejectAdmission("${doc.id}")'>×</button>
-                </div>
-            </div>`;
-        });
-        document.getElementById("requestList").innerHTML = html || "No requests";
-    });
-
-    async function approveAdmission(id) {
-        const doc = await db.collection("new_requests").doc(id).get();
-        openStudentModal(doc.data(), id);
-    }
-
-    async function rejectAdmission(id) {
-        if(confirm("Delete request?")) await db.collection("new_requests").doc(id).delete();
-    }
-
-    // --- OFFICIAL PDF GENERATION ---
+    // --- Official PDF Generator ---
     function generateOfficialPDF(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // 1. HEADER
+        // Background Header
         doc.setFillColor(139, 0, 0);
         doc.rect(0, 0, 210, 40, 'F');
+        
+        // School Info
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
         doc.setFont("helvetica", "bold");
@@ -195,26 +149,25 @@
         doc.text("LAMBHUA, SULTANPUR, UTTAR PRADESH", 105, 26, { align: "center" });
         doc.text("OFFICIAL ADMISSION REGISTRATION SLIP - 2026", 105, 32, { align: "center" });
 
-        // 2. STUDENT PHOTO
+        // Student Photo
         if (data.photo) {
             doc.setDrawColor(139, 0, 0);
             doc.rect(160, 45, 35, 45); 
             doc.addImage(data.photo, 'JPEG', 161, 46, 33, 43);
         }
 
-        // 3. INFO TABLE
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(14);
         doc.text("REGISTRATION DETAILS", 20, 55);
         
         const tableBody = [
-            ["Applicant Name", data.name.toUpperCase()],
+            ["Applicant Name", (data.name || "N/A").toUpperCase()],
             ["Date of Birth", data.dob || "N/A"],
             ["Gender", data.gender || "N/A"],
-            ["Class Applied", data.class],
-            ["Father's Name", data.father],
+            ["Class Applied", data.class || "N/A"],
+            ["Father's Name", data.father || "N/A"],
             ["Mother's Name", data.mother || "N/A"],
-            ["Mobile Number", data.mobile],
+            ["Mobile Number", data.mobile || "N/A"],
             ["Aadhar Number", data.aadharNo || data.aadhar || "N/A"],
             ["Address", data.address || "N/A"]
         ];
@@ -228,7 +181,7 @@
             styles: { fontSize: 10, cellPadding: 3 }
         });
 
-        // 4. AADHAR PREVIEW
+        // Aadhar Preview
         let currentY = doc.lastAutoTable.finalY + 10;
         if (data.aadharImg) {
             doc.setFont("helvetica", "bold");
@@ -237,14 +190,187 @@
             currentY += 75;
         }
 
-        // 5. SIGNATURES
+        // Signatures
         doc.setFontSize(10);
         doc.line(20, currentY + 20, 70, currentY + 20);
         doc.text("Parent Signature", 20, currentY + 25);
         doc.line(140, currentY + 20, 190, currentY + 20);
         doc.text("Office Seal / Principal", 140, currentY + 25);
 
-        doc.save(`${data.name}_Registration.pdf`);
+        doc.save(`${data.name || 'Student'}_Registration.pdf`);
+    }
+
+    // --- Pipeline Stream ---
+    db.collection("new_requests").onSnapshot(snap => {
+        let html = "";
+        document.getElementById("countLabel").innerText = snap.size + " NEW";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const dataStr = JSON.stringify(d).replace(/'/g, "&apos;");
+            html += `
+            <div class="req-card">
+                <div>
+                    <b>${d.name}</b><br>
+                    <small>${d.class} | ${d.mobile}</small>
+                </div>
+                <div class="pipeline-actions">
+                    <button class="btn-small btn-pdf" onclick='generateOfficialPDF(${dataStr})'>📄</button>
+                    <button class="btn-small" onclick='approveAdmission("${doc.id}")'>Accept</button>
+                    <button class="btn-small btn-reject" onclick='rejectAdmission("${doc.id}")'>×</button>
+                </div>
+            </div>`;
+        });
+        document.getElementById("requestList").innerHTML = html || "No pending requests.";
+    });
+
+    async function approveAdmission(id) {
+        const doc = await db.collection("new_requests").doc(id).get();
+        if(doc.exists) openStudentModal(doc.data(), id);
+    }
+
+    async function rejectAdmission(id) {
+        if(confirm("Are you sure you want to delete this request?")) {
+            await db.collection("new_requests").doc(id).delete();
+        }
+    }
+
+    // --- Student Profile Logic ---
+    async function openStudentModal(prefillData = null, reqDocId = null) {
+        if(!prefillData) toggleFab();
+        
+        const snap = await db.collection("students").get();
+        let max = 0; snap.forEach(s => { if(parseInt(s.id) > max) max = parseInt(s.id); });
+        const nextID = (max + 1).toString().padStart(4, '0');
+
+        document.getElementById('modalBody').innerHTML = `
+            <h3>${prefillData ? 'Approve' : 'New'} Student</h3>
+            <label>Enrollment ID</label><input id="s_id" value="${nextID}">
+            <label>Full Name</label><input id="s_name" value="${prefillData ? prefillData.name : ''}">
+            <label>Father's Name</label><input id="s_father" value="${prefillData ? (prefillData.father || '') : ''}">
+            <label>Class</label><input id="s_class" value="${prefillData ? prefillData.class : ''}">
+            <label>Mobile</label><input id="s_mobile" value="${prefillData ? prefillData.mobile : ''}">
+            <button onclick="saveStudent('${reqDocId}')" style="width:100%; margin-top:15px;">Confirm Registration</button>`;
+        document.getElementById('systemModal').classList.add('active');
+    }
+
+    async function saveStudent(reqDocId) {
+        const data = {
+            id: document.getElementById('s_id').value,
+            name: document.getElementById('s_name').value,
+            father: document.getElementById('s_father').value,
+            class: document.getElementById('s_class').value,
+            mobile: document.getElementById('s_mobile').value,
+            joinedAt: new Date().toLocaleDateString()
+        };
+        await db.collection("students").doc(data.id).set(data);
+        if(reqDocId !== "null" && reqDocId !== "undefined") {
+            await db.collection("new_requests").doc(reqDocId).delete();
+        }
+        alert("Student Enrolled Successfully!"); closeModal();
+    }
+
+    // --- Search & Search Results ---
+    async function mainSearch() {
+        const id = document.getElementById("finderInput").value;
+        const resDiv = document.getElementById("finderResult");
+        if(!id) return alert("Enter ID first");
+
+        if(currentMode === 'details') {
+            const doc = await db.collection("students").doc(id).get();
+            if(doc.exists) {
+                const d = doc.data();
+                const dStr = JSON.stringify(d).replace(/'/g, "&apos;");
+                resDiv.innerHTML = `
+                <div class="card" style="background:rgba(16,185,129,0.1); border:1px solid #10b981;">
+                    <h4 style="margin:0;">${d.name}</h4>
+                    <p style="font-size:12px; opacity:0.7;">Class: ${d.class} | ID: ${d.id}</p>
+                    <button onclick='generateOfficialPDF(${dStr})' style="width:100%; font-size:12px;">Download Profile PDF</button>
+                </div>`;
+            } else resDiv.innerHTML = "Student ID Not Found.";
+        } else {
+            const doc = await db.collection("results").doc(id).get();
+            if(doc.exists) {
+                let html = "<h4>Exam Results:</h4>";
+                Object.keys(doc.data().exams).forEach(ex => {
+                    html += `<button onclick="downloadResult('${id}','${ex}')" style="width:100%; margin-bottom:8px; background:#334155;">Download ${ex}</button>`;
+                });
+                resDiv.innerHTML = html;
+            } else resDiv.innerHTML = "No exam results found.";
+        }
+    }
+
+    // --- Result Helper ---
+    async function downloadResult(sid, exId) {
+        const sSnap = await db.collection("students").doc(sid).get();
+        const rSnap = await db.collection("results").doc(sid).get();
+        if(!sSnap.exists || !rSnap.exists) return;
+        
+        const s = sSnap.data();
+        const r = rSnap.data().exams[exId];
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFont("helvetica", "bold");
+        doc.text("JANTRAJI DEVI VIDYA MANDIR", 105, 20, {align: "center"});
+        doc.setFontSize(12);
+        doc.text(`EXAMINATION MARK SHEET: ${exId}`, 105, 28, {align: "center"});
+        
+        doc.setFontSize(10);
+        doc.text(`Student: ${s.name}`, 20, 45);
+        doc.text(`Class: ${s.class} | Roll No: ${s.id}`, 20, 52);
+        
+        doc.autoTable({ 
+            startY: 60, 
+            head: [['Subject', 'Marks Obtained']], 
+            body: Object.entries(r.subjects),
+            theme: 'grid',
+            headStyles: { fillColor: [139, 0, 0] }
+        });
+        
+        doc.save(`${s.name}_${exId}_Result.pdf`);
+    }
+
+    // --- Admin Manager ---
+    async function openAdminManager() {
+        toggleFab();
+        document.getElementById('modalBody').innerHTML = `
+            <h3>Manage Admins</h3>
+            <input id="newAdminName" placeholder="Admin Full Name">
+            <input id="newAdminId" placeholder="Login ID">
+            <input id="newAdminPass" type="password" placeholder="Password">
+            <button onclick="addNewAdmin()" style="width:100%; margin-bottom:20px;">+ Add New Admin</button>
+            <div id="adminListContainer"></div>`;
+        document.getElementById('systemModal').classList.add('active');
+        loadAdminList();
+    }
+
+    async function loadAdminList() {
+        const snap = await db.collection("admins").get();
+        let html = "<h4>Current Access List</h4>";
+        snap.forEach(doc => {
+            html += `
+            <div class="admin-list-item">
+                <span><b>${doc.data().name}</b><br><small>ID: ${doc.id}</small></span>
+                <button onclick="deleteAdmin('${doc.id}')" style="background:#ef4444; padding:5px 10px; font-size:10px;">Remove</button>
+            </div>`;
+        });
+        document.getElementById("adminListContainer").innerHTML = html;
+    }
+
+    async function addNewAdmin() {
+        const id = document.getElementById("newAdminId").value;
+        const name = document.getElementById("newAdminName").value;
+        const pass = document.getElementById("newAdminPass").value;
+        if(!id || !name || !pass) return alert("Fill all fields");
+        await db.collection("admins").doc(id).set({ name: name, password: pass });
+        loadAdminList();
+    }
+
+    async function deleteAdmin(id) {
+        if(confirm("Revoke admin access for " + id + "?")) {
+            await db.collection("admins").doc(id).delete();
+            loadAdminList();
+        }
     }
 
     function logout() { localStorage.clear(); window.location.href="index.html"; }
