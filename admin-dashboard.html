@@ -46,7 +46,6 @@
         .dynamic-row { display: flex; gap: 8px; margin-bottom: 5px; }
         .admin-list-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-top: 5px; display: flex; justify-content: space-between; }
         
-        /* New Pipeline Actions Styling */
         .pipeline-actions { display: flex; gap: 5px; }
         .btn-small { padding: 8px 12px; font-size: 11px; }
         .btn-reject { background: #475569; }
@@ -123,8 +122,8 @@
     function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); }
     function closeModal() { document.getElementById('systemModal').classList.remove('active'); }
 
-    // --- Student Entry Form (Modified to handle Auto-fill) ---
-async function openStudentModal(prefillData = null, reqDocId = null) {
+    // --- Student Entry Form (Fixed for Auto-fill & Image) ---
+    async function openStudentModal(prefillData = null, reqDocId = null) {
         if(!prefillData) toggleFab();
         
         const snap = await db.collection("students").get();
@@ -133,10 +132,9 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
 
         let classValue = "1";
         if(prefillData && prefillData.class) {
-            classValue = prefillData.class.replace(/\D/g,'') || "1";
+            classValue = prefillData.class.replace(/\D/g,'') || prefillData.class;
         }
 
-        // Identify extra fields like image/photo that are not in the main inputs
         let extraFieldsHtml = '';
         if(prefillData) {
             const standardKeys = ['name', 'father', 'class', 'mobile'];
@@ -170,28 +168,7 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
                 <option value="8" ${classValue=="8"?'selected':''}>Class 8th</option>
             </select>
             <input id="s_mobile" value="${prefillData ? (prefillData.mobile || '') : ''}" placeholder="Mobile Number">
-            <div id="extraFields">
-                ${extraFieldsHtml}
-            </div>
-            <button onclick="addExtraField()" style="background:#334155; width:100%; margin:10px 0; font-size:12px">+ Add More Detail</button>
-            <button onclick="saveStudent('${reqDocId}')" style="width:100%">Confirm & Save</button>`;
-        document.getElementById('systemModal').classList.add('active');
-    }
-        document.getElementById('modalBody').innerHTML = `
-            <h3>${prefillData ? 'Approve' : 'Add New'} Student</h3>
-            <input id="s_id" value="${nextID}" placeholder="Enrollment ID">
-            <input id="s_name" value="${prefillData ? prefillData.name : ''}" placeholder="Full Name">
-            <input id="s_father" value="${prefillData ? (prefillData.father || '') : ''}" placeholder="Father's Name">
-            <select id="s_class">
-                <option value="1" ${classValue=="1"?'selected':''}>Class 1</option>
-                <option value="2" ${classValue=="2"?'selected':''}>Class 2</option>
-                <option value="9" ${classValue=="9"?'selected':''}>Class 9</option>
-                <option value="10" ${classValue=="10"?'selected':''}>Class 10</option>
-            </select>
-            <input id="s_mobile" value="${prefillData ? (prefillData.mobile || '') : ''}" placeholder="Mobile Number">
-            <div id="extraFields">
-                ${prefillData && prefillData.address ? `<div class="dynamic-row"><input value="Address" class="ext-key"><input value="${prefillData.address}" class="ext-val"></div>` : ''}
-            </div>
+            <div id="extraFields">${extraFieldsHtml}</div>
             <button onclick="addExtraField()" style="background:#334155; width:100%; margin:10px 0; font-size:12px">+ Add More Detail</button>
             <button onclick="saveStudent('${reqDocId}')" style="width:100%">Confirm & Save</button>`;
         document.getElementById('systemModal').classList.add('active');
@@ -219,7 +196,6 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
 
         await db.collection("students").doc(data.id).set(data);
         
-        // Clean up: If this was from a request, delete the request
         if(reqDocId !== "null" && reqDocId !== "undefined") {
             await db.collection("new_requests").doc(reqDocId).delete();
         }
@@ -227,7 +203,6 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         alert("Student Successfully Registered!"); closeModal();
     }
 
-    // --- Admin Management ---
     async function openAdminManager() {
         toggleFab();
         document.getElementById('modalBody').innerHTML = `
@@ -271,7 +246,6 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         }
     }
 
-    // --- Result Logic ---
     function openResultModal() {
         toggleFab();
         document.getElementById('modalBody').innerHTML = `
@@ -305,7 +279,7 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         alert("Result Uploaded!"); closeModal();
     }
 
-    // --- Pipeline Stream (With Reject & PDF Fix) ---
+    // --- Pipeline Stream (Fixed for Large Data) ---
     db.collection("new_requests").onSnapshot(snap => {
         let html = "";
         document.getElementById("countLabel").innerText = snap.size + " NEW";
@@ -314,7 +288,7 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
             html += `<div class="req-card">
                 <div><b>${d.name}</b><br><small>${d.class} | ${d.mobile}</small></div>
                 <div class="pipeline-actions">
-                    <button class="btn-small btn-pdf" onclick='generatePDF(${JSON.stringify(d)}, "REGISTRATION SLIP")'>📄</button>
+                    <button class="btn-small btn-pdf" onclick="generatePdfFromId('${doc.id}', 'new_requests', 'REGISTRATION SLIP')">📄</button>
                     <button class="btn-small" onclick='approveAdmission("${doc.id}")'>Accept</button>
                     <button class="btn-small btn-reject" onclick='rejectAdmission("${doc.id}")'>×</button>
                 </div>
@@ -323,11 +297,14 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         document.getElementById("requestList").innerHTML = html || "No requests";
     });
 
+    async function generatePdfFromId(docId, collection, title) {
+        const doc = await db.collection(collection).doc(docId).get();
+        if(doc.exists) generatePDF(doc.data(), title);
+    }
+
     async function approveAdmission(reqId) {
         const doc = await db.collection("new_requests").doc(reqId).get();
-        if(doc.exists) {
-            openStudentModal(doc.data(), reqId);
-        }
+        if(doc.exists) openStudentModal(doc.data(), reqId);
     }
 
     async function rejectAdmission(reqId) {
@@ -336,7 +313,6 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         }
     }
 
-    // --- Existing Utility ---
     let currentMode = 'details';
     function switchTab(mode) {
         currentMode = mode;
@@ -351,7 +327,7 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
             const doc = await db.collection("students").doc(id).get();
             if(doc.exists) {
                 const d = doc.data();
-                resDiv.innerHTML = `<div class="card" style="background:rgba(16,185,129,0.1)"><h4>${d.name}</h4><p>Class: ${d.class}</p><button onclick='generatePDF(${JSON.stringify(d)}, "PROFILE")'>PDF</button></div>`;
+                resDiv.innerHTML = `<div class="card" style="background:rgba(16,185,129,0.1)"><h4>${d.name}</h4><p>Class: ${d.class}</p><button onclick="generatePdfFromId('${id}', 'students', 'PROFILE')">PDF</button></div>`;
             } else resDiv.innerHTML = "Not Found";
         } else {
             const doc = await db.collection("results").doc(id).get();
@@ -373,7 +349,8 @@ async function openStudentModal(prefillData = null, reqDocId = null) {
         doc.autoTable({ startY: 40, head: [['Subject', 'Marks']], body: Object.entries(r.subjects) });
         doc.save(`${s.name}_result.pdf`);
     }
-function generatePDF(data, title) {
+
+    function generatePDF(data, title) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
@@ -382,45 +359,36 @@ function generatePDF(data, title) {
         doc.setFontSize(10);
         doc.text(title, 105, 22, {align: "center"});
 
-        // Separate image URL if exists and filter it out from the table data
         let imageUrl = null;
         const tableBody = [];
 
         Object.entries(data).forEach(([key, value]) => {
             if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image'))) {
-                imageUrl = value; // Store image link
+                imageUrl = value; 
             } else {
                 tableBody.push([key.toUpperCase(), value]);
             }
         });
 
-        // Add Table
         doc.autoTable({ 
             startY: 30, 
             body: tableBody, 
             theme: 'grid',
-            margin: { right: imageUrl ? 60 : 15 } // Make space for image if it exists
+            margin: { right: imageUrl ? 60 : 15 } 
         });
 
-        // If image exists, add it to the top right of the table area
         if (imageUrl) {
             try {
                 doc.addImage(imageUrl, 'JPEG', 155, 30, 40, 40);
             } catch (e) {
-                console.error("Image loading failed", e);
-                doc.text("Image failed to load", 155, 35);
+                doc.text("Image Error", 155, 35);
             }
         }
 
         doc.save(`${data.name || 'record'}.pdf`);
     }
+
     function logout() { localStorage.clear(); window.location.href="index.html"; }
 </script>
 </body>
 </html>
-
-
-
-
-
-
