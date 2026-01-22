@@ -333,22 +333,52 @@
         doc.autoTable({ startY: 40, head: [['Subject', 'Marks']], body: Object.entries(r.subjects) });
         doc.save(`${s.name}_result.pdf`);
     }
-
-    function generatePDF(data, title) {
+function generatePDF(data, title) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        
         doc.setFont("helvetica", "bold");
-        doc.text("JAI DEVI VIDYA MANDIR", 105, 15, {align: "center"});
+        doc.text("JANTRAJI DEVI VIDYA MANDIR LAMBHUA", 105, 15, {align: "center"});
         doc.setFontSize(10);
         doc.text(title, 105, 22, {align: "center"});
-        doc.autoTable({ startY: 30, body: Object.entries(data), theme: 'grid' });
+
+        // Separate image URL if exists and filter it out from the table data
+        let imageUrl = null;
+        const tableBody = [];
+
+        Object.entries(data).forEach(([key, value]) => {
+            if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:image'))) {
+                imageUrl = value; // Store image link
+            } else {
+                tableBody.push([key.toUpperCase(), value]);
+            }
+        });
+
+        // Add Table
+        doc.autoTable({ 
+            startY: 30, 
+            body: tableBody, 
+            theme: 'grid',
+            margin: { right: imageUrl ? 60 : 15 } // Make space for image if it exists
+        });
+
+        // If image exists, add it to the top right of the table area
+        if (imageUrl) {
+            try {
+                doc.addImage(imageUrl, 'JPEG', 155, 30, 40, 40);
+            } catch (e) {
+                console.error("Image loading failed", e);
+                doc.text("Image failed to load", 155, 35);
+            }
+        }
+
         doc.save(`${data.name || 'record'}.pdf`);
     }
-
     function logout() { localStorage.clear(); window.location.href="index.html"; }
 </script>
 </body>
 </html>
+
 
 
 
